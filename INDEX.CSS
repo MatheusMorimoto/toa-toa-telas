@@ -1,0 +1,206 @@
+:root {
+    --navy-blue: #001f3f;
+    --yellow-brand: #FFDC00;
+    --green-action: #2ECC40;
+    --yellow-action: #FFB700;
+    --red-status: #FF4136;
+}
+
+body {
+    background-color: #f4f7f6;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* 1. Cabeçalho de Identidade (Top Bar) */
+.top-bar {
+    background-color: var(--navy-blue);
+    color: var(--yellow-brand);
+    padding: 12px 30px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.top-bar .brand-area {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.top-bar .brand-area img {
+    height: 112.5px;
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.1;
+    border-left: 1px solid var(--yellow-brand);
+    padding-left: 15px;
+    color: var(--yellow-brand);
+}
+
+.brand-main { font-weight: 800; font-size: 2.2rem; text-transform: uppercase; }
+.brand-sub { font-size: 1.5rem; font-weight: 500; opacity: 0.9; }
+.brand-desc { font-size: 1.3rem; font-weight: 400; text-transform: uppercase; letter-spacing: 1px; }
+
+.title-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-subtitle {
+    font-size: 1.2rem;
+    font-weight: 300;
+    color: var(--yellow-brand);
+    border-left: 2px solid var(--yellow-brand);
+    padding-left: 15px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.header-right-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.top-bar h1 {
+    font-size: 1.6rem;
+    margin: 0;
+    font-weight: 800;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.nav-links-top {
+    display: flex;
+    align-items: center;
+}
+
+.search-container {
+    width: 200px;
+}
+
+.search-container .form-control {
+    border-radius: 20px;
+    border: none;
+    padding: 8px 20px;
+}
+
+/* 2. Seção de Entrada de Dados (Formulário) */
+.main-content {
+    padding: 20px 40px;
+}
+
+.form-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #666;
+    text-transform: uppercase;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+}
+
+/* 3. Gerenciamento de Imagem */
+.image-panel {
+    background-color: #fafafa;
+    padding: 20px;
+    text-align: center;
+}
+
+.image-preview {
+    width: 100%;
+    height: 320px;
+    border: 3px dashed #ddd;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    overflow: hidden;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: none;
+}
+
+.btn-upload {
+    background-color: var(--green-action);
+    color: white !important;
+    font-weight: 700;
+    padding: 12px;
+    border: none;
+    transition: 0.3s;
+}
+
+.btn-upload:hover { opacity: 0.9; }
+
+/* 4. Botões de Ação */
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin: 30px 0;
+}
+
+.btn-save-main {
+    background-color: var(--green-action);
+    color: white;
+    font-weight: 800;
+    padding: 12px 80px;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 8px;
+}
+
+.btn-warning-custom {
+    background-color: var(--yellow-action);
+    color: #000;
+    font-weight: 700;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+}
+
+/* 5. Tabela de Catálogo */
+.table-container {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 40px;
+}
+
+.mini-thumb {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-available { background-color: #d4edda; color: #155724; }
+.status-rented { background-color: #f8d7da; color: #721c24; }

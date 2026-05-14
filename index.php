@@ -1,0 +1,145 @@
+<?php
+include_once 'db.php';
+// Busca os produtos para popular a tabela do catálogo
+$result = listarProdutos();
+
+// Verifica se houve erro na API ao listar produtos
+$api_error = isset($result['error']) ? $result : null;
+$result = $api_error ? [] : $result; // Se houver erro, $result fica vazio para não quebrar o foreach
+?>
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tôa Tôa - Cadastro de Produtos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="index.css" rel="stylesheet">
+</head>
+
+<body>
+    <?php include_once 'navbar.php'; ?>
+
+    <div class="container-fluid main-content">
+        <?php if (isset($_GET['sucesso'])): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                Produto cadastrado com sucesso!
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
+
+        <form action="salvar_produto.php" method="POST" enctype="multipart/form-data">
+            <div class="row g-0 form-card shadow-sm">
+                <!-- 2. Seção de Entrada de Dados (Formulário) -->
+                <div class="col-lg-8 p-4 border-end">
+                    <h5 class="section-title">Dados Principais</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="nomeProduto" class="form-label">Nome do Vestido</label>
+                            <input type="text" class="form-control" id="nomeProduto" name="nomeProduto" placeholder="Ex: Vestido Sereia Bordado" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="codProduto" class="form-label">Código Único (COD)</label>
+                            <input type="text" class="form-control" id="codProduto" name="codProduto" placeholder="Ex: TT-001" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="categoria" class="form-label">Categoria</label>
+                            <select class="form-select" id="categoria" name="categoria" required>
+                                <option value="">Selecione...</option>
+                                <option value="Noivas">Noivas</option>
+                                <option value="Formandas">Formandas</option>
+                                <option value="Madrinhas">Madrinhas</option>
+                                <option value="Debutantes">Debutantes</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="quantidade" class="form-label">Estoque Atual</label>
+                            <input type="number" class="form-control" id="quantidade" name="quantidade" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="validade" class="form-label">Data Aquisição</label>
+                            <input type="date" class="form-control" id="validade" name="validade" required>
+                        </div>
+                    </div>
+
+                    <h5 class="section-title mt-4">Gestão Financeira</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="precoUnitario" class="form-label">Preço de Venda (R$)</label>
+                            <input type="number" step="0.01" class="form-control form-control-lg" id="precoUnitario" name="precoUnitario" placeholder="0,00" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="precoPacote" class="form-label text-primary fw-bold">Valor do Aluguel (R$)</label>
+                            <input type="number" step="0.01" class="form-control form-control-lg border-primary" id="precoPacote" name="precoPacote" placeholder="0,00" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição Detalhada</label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="4" placeholder="Anote aqui detalhes como: Tecido seda, bordado em pedraria, tamanho G..."></textarea>
+                    </div>
+                </div>
+
+                <!-- 3. Gerenciamento de Imagem (Painel Lateral Direto) -->
+                <div class="col-lg-4 image-panel">
+                    <h5 class="section-title">Preview da Foto</h5>
+                    <div class="image-preview" id="imagePreviewContainer">
+                        <img src="" alt="Preview" id="previewImg">
+                        <div id="previewPlaceholder">
+                            <i class="bi bi-image" style="font-size: 3rem; color: #ccc;"></i>
+                            <p class="text-muted">Aguardando imagem...</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label for="imagemProduto" class="btn btn-upload w-100">
+                            <i class="bi bi-plus-circle me-2"></i> Adicionar Imagem
+                        </label>
+                        <input type="file" class="form-control d-none" id="imagemProduto" name="imagemProduto" accept="image/*">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Botões de Ação -->
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-save-main">SALVAR CADASTRO</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Faz a mensagem de sucesso desaparecer após 3 segundos (3000ms)
+        const alertElement = document.querySelector('.alert');
+        if (alertElement) {
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alertElement);
+                bsAlert.close();
+            }, 3000);
+        }
+
+        // Lógica de Preview da Imagem
+        const imgInput = document.getElementById('imagemProduto');
+        const previewImg = document.getElementById('previewImg');
+        const placeholder = document.getElementById('previewPlaceholder');
+
+        imgInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewImg.style.display = 'block';
+                    placeholder.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+
+</html>

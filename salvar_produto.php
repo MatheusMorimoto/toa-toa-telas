@@ -5,22 +5,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 1. Processamento da Imagem (Salva o arquivo físico na pasta imagens/)
     $nomeImagem = 'placeholder.jpg';
     if (isset($_FILES['imagemProduto']) && $_FILES['imagemProduto']['error'] === 0) {
-        $extensao = pathinfo($_FILES['imagemProduto']['name'], PATHINFO_EXTENSION);
+        $extensao = strtolower(pathinfo($_FILES['imagemProduto']['name'], PATHINFO_EXTENSION));
+        $permitidos = ['jpg', 'jpeg', 'png', 'webp'];
+        
+        if (!in_array($extensao, $permitidos)) {
+            echo "<div class='alert alert-danger text-center'><strong>Erro:</strong> Apenas imagens (JPG, PNG, WEBP) são permitidas.</div>";
+            exit;
+        }
+
         $nomeImagem = "produto_" . uniqid() . "." . $extensao;
         
         if (!is_dir('imagens')) mkdir('imagens', 0777, true);
         move_uploaded_file($_FILES['imagemProduto']['tmp_name'], 'imagens/' . $nomeImagem);
     }
 
-    // 2. Mapeia os dados conforme o Node.js espera (Case Sensitive)
+    // 2. Mapeia os dados seguindo EXATAMENTE o exemplo JSON da sua documentação de API
     $dadosProduto = [
-        "codProduto"    => $_POST['codProduto'] ?? '',
         "nomeProduto"   => $_POST['nomeProduto'] ?? '',
         "categoria"     => $_POST['categoria'] ?? '',
-        "validade"      => !empty($_POST['validade']) ? $_POST['validade'] : null,
-        "quantidade"    => (int)($_POST['quantidade'] ?? 0),
-        "precoUnitario" => (float)($_POST['precoUnitario'] ?? 0),
-        "precoPacote"   => (float)($_POST['precoPacote'] ?? 0),
+        "validade"      => (!empty($_POST['validade'])) ? $_POST['validade'] : null,
+        "quantidade"    => isset($_POST['quantidade']) ? (int)$_POST['quantidade'] : 0,
+        "precoUnitario" => isset($_POST['precoUnitario']) ? (float)$_POST['precoUnitario'] : 0.0,
+        "precoPacote"   => isset($_POST['precoPacote']) ? (float)$_POST['precoPacote'] : 0.0,
         "descricao"     => $_POST['descricao'] ?? '',
         "imagem"        => $nomeImagem
     ];

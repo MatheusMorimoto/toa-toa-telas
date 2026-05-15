@@ -1,11 +1,5 @@
 <?php
 include_once 'db.php';
-// Busca os produtos para popular a tabela do catálogo
-$result = listarProdutos();
-
-// Verifica se houve erro na API ao listar produtos
-$api_error = isset($result['error']) ? $result : null;
-$result = $api_error ? [] : $result; // Se houver erro, $result fica vazio para não quebrar o foreach
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -36,13 +30,9 @@ $result = $api_error ? [] : $result; // Se houver erro, $result fica vazio para 
                 <div class="col-lg-8 p-4 border-end">
                     <h5 class="section-title">Dados Principais</h5>
                     <div class="row mb-3">
-                        <div class="col-md-8">
+                        <div class="col-md-12">
                             <label for="nomeProduto" class="form-label">Nome do Vestido</label>
                             <input type="text" class="form-control" id="nomeProduto" name="nomeProduto" placeholder="Ex: Vestido Sereia Bordado" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="codProduto" class="form-label">Código Único (COD)</label>
-                            <input type="text" class="form-control" id="codProduto" name="codProduto" placeholder="Ex: TT-001" required>
                         </div>
                     </div>
 
@@ -113,15 +103,6 @@ $result = $api_error ? [] : $result; // Se houver erro, $result fica vazio para 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Faz a mensagem de sucesso desaparecer após 3 segundos (3000ms)
-        const alertElement = document.querySelector('.alert');
-        if (alertElement) {
-            setTimeout(() => {
-                const bsAlert = new bootstrap.Alert(alertElement);
-                bsAlert.close();
-            }, 3000);
-        }
-
         // Lógica de Preview da Imagem
         const imgInput = document.getElementById('imagemProduto');
         const previewImg = document.getElementById('previewImg');

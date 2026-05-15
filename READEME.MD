@@ -85,5 +85,11 @@ RNF05 - Escalabilidade Interna: O sistema deve ser robusto o suficiente para sup
 
 ## supabase 
 
-sistema-toa-toa
-M@v!21019425
+git add .
+git commit -m "Organizando projeto e adicionando segurança"
+git pull origin main --rebase
+git push origin main
+git push origin main --force
+
+
+php -S localhost:8000

@@ -10,8 +10,15 @@ $pass = "M@v!21019425";
 $dbname = "postgres";
 
 // URL Base da sua API Node.js
-$api_base_url = "http://127.0.0.1:3000/toa-toa-api-supabase"; // Use 127.0.0.1 se o Node.js estiver na mesma máquina
-$api_key = "sua_chave_de_comunicacao_php_node"; // Sua chave de comunicação PHP <-> Node.js
+/** 
+ * NOTA: Adicionamos /toa-toa-api-supabase pois o servidor Node.js 
+ * responde as rotas de produtos dentro deste prefixo.
+ */
+$api_base_url = "https://api-toa-a-toa-2.onrender.com/toa-toa-api-supabase";
+
+// IMPORTANTE: O valor desta variável deve ser EXATAMENTE o mesmo que 
+// você definiu como CHAVE_MESTRA no painel de Environment Variables do Render.
+$api_key = "sua_chave_de_comunicacao_php_node"; 
 
 /**
  * Função genérica para realizar chamadas à API via HTTP (file_get_contents)
@@ -19,10 +26,13 @@ $api_key = "sua_chave_de_comunicacao_php_node"; // Sua chave de comunicação PH
 function api_request($method, $endpoint, $data = null) {
     global $api_base_url, $api_key;
 
-    // Monta a URL de forma limpa: evita barra no final se o endpoint for "/" ou vazio
+    // Garante que a URL base termine com barra apenas se necessário
     $url = rtrim($api_base_url, '/');
-    if ($endpoint !== '/' && !empty($endpoint)) {
-        $url .= '/' . ltrim($endpoint, '/');
+    
+    if ($endpoint === '/') {
+        $url .= '/';
+    } elseif (!empty($endpoint)) {
+        $url .= (strpos($endpoint, '?') === 0) ? $endpoint : '/' . ltrim($endpoint, '/');
     }
 
     $options = [
@@ -32,7 +42,7 @@ function api_request($method, $endpoint, $data = null) {
             'method'  => $method,
             'content' => $data ? json_encode($data) : null,
             'ignore_errors' => true,
-            'timeout' => 15 // Evita que o PHP espere eternamente se a API travar
+            'timeout' => 30 // Aumentado para 30s para suportar o "cold start" do Render
         ]
     ];
 
@@ -40,7 +50,7 @@ function api_request($method, $endpoint, $data = null) {
     $response = @file_get_contents($url, false, $context);
 
     if ($response === false) {
-        return ['error' => "Erro de Conexão", 'detalhes' => "Não foi possível estabelecer contato com o serviço na porta 3000."];
+        return ['error' => "Erro de Conexão", 'detalhes' => "Não foi possível estabelecer contato com a API em: " . $url];
     }
 
     $httpCode = 500;
@@ -58,7 +68,8 @@ function api_request($method, $endpoint, $data = null) {
 
     // Valida se a resposta é um JSON válido
     if (json_last_error() !== JSON_ERROR_NONE) {
-        return ['error' => "Resposta Inválida", 'detalhes' => "A API não retornou um formato JSON reconhecível."];
+        $trechoResposta = substr(strip_tags($response), 0, 100);
+        return ['error' => "Resposta Inválida", 'detalhes' => "A API não retornou JSON. Resposta do servidor: " . $trechoResposta];
     }
 
     if ($httpCode >= 200 && $httpCode < 300) {
@@ -71,12 +82,10 @@ function api_request($method, $endpoint, $data = null) {
 }
 
 function listarProdutos() {
-    return api_request("GET", "/"); // Conforme documentação, GET para produtos é na URL base
+    return api_request("GET", "/"); 
 }
 
 function buscarProduto($busca) {
-    // Ajuste o endpoint conforme sua API Node (ex: /produtos?busca=...)
-    // Se a API Node espera a busca na raiz, use "/" e passe a busca como parâmetro
     return api_request("GET", "/?busca=" . urlencode($busca));
 }
 ?>

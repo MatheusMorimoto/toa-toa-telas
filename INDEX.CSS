@@ -204,3 +204,29 @@ body {
 
 .status-available { background-color: #d4edda; color: #155724; }
 .status-rented { background-color: #f8d7da; color: #721c24; }
+
+/* Estilos para o Catálogo Público */
+.catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding: 20px 0; }
+.catalog-card { background: white; border-radius: 15px; overflow: hidden; border: 1px solid #eee; transition: transform 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.catalog-card:hover { transform: translateY(-10px); }
+.catalog-card img { width: 100%; height: 350px; object-fit: cover; }
+.catalog-info { padding: 15px; text-align: center; }
+.catalog-price { font-size: 1.2rem; font-weight: 800; color: var(--navy-blue); margin-top: 10px; }
+.btn-whatsapp { background-color: #25D366; color: white; border: none; font-weight: 700; width: 100%; padding: 10px; margin-top: 15px; border-radius: 8px; }
+
+/* Barra de Ações Flutuante */
+.catalog-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--navy-blue);
+    color: var(--yellow-brand);
+    padding: 15px 30px;
+    border-radius: 50px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    display: none;
+    z-index: 1000;
+    align-items: center;
+    gap: 20px;
+}

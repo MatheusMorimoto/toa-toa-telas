@@ -51,9 +51,17 @@ $produtos = $api_error ? [] : $result;
     <div class="container-fluid main-content mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="section-title mb-0"><i class="bi bi-box-seam me-2"></i>Produtos em Estoque</h4>
-            <a href="index.php" class="btn btn-save-main btn-sm shadow-sm">
-                <i class="bi bi-plus-lg"></i> Novo Cadastro
+            <a href="catalogo.php" class="btn btn-warning-custom btn-sm shadow-sm">
+                <i class="bi bi-journal-richtext me-1"></i> Criar Catálogo
             </a>
+        </div>
+
+        <!-- Barra de Ações para Gerar Catálogo -->
+        <div id="catalogBar" class="catalog-bar">
+            <span><strong id="selectedCount">0</strong> vestidos selecionados</span>
+            <button class="btn btn-warning btn-sm fw-bold" onclick="gerarLink()">
+                <i class="bi bi-link-45deg"></i> Gerar Link do Catálogo
+            </button>
         </div>
 
         <?php if ($api_error): ?>
@@ -72,6 +80,7 @@ $produtos = $api_error ? [] : $result;
                     <table class="table align-middle mb-0">
                         <thead class="thead-brand">
                             <tr>
+                                <th class="ps-3 text-center"><input type="checkbox" id="selectAll" class="form-check-input"></th>
                                 <th class="ps-3">Foto</th>
                                 <th>Cód.</th>
                                 <th>Nome do Vestido</th>
@@ -86,6 +95,7 @@ $produtos = $api_error ? [] : $result;
                         <tbody>
                             <?php foreach ($produtos as $p): ?>
                                 <tr>
+                                    <td class="ps-3 text-center"><input type="checkbox" class="form-check-input product-check" value="<?php echo htmlspecialchars($p['id'] ?? ''); ?>"></td>
                                     <td class="ps-3">
                                         <?php 
                                             // Mapeamento robusto: aceita snake_case (DB) e camelCase (API Docs)
@@ -125,6 +135,58 @@ $produtos = $api_error ? [] : $result;
             </div>
         <?php endif; ?>
     </div>
+
+    <!-- Modal para Exibir o Link -->
+    <div class="modal fade" id="linkModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Link do Catálogo Gerado</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p>Envie este link para o cliente pelo WhatsApp:</p>
+                    <div class="input-group mb-3">
+                        <input type="text" id="generatedLink" class="form-control" readonly>
+                        <button class="btn btn-primary" onclick="copiarLink()"><i class="bi bi-clipboard"></i></button>
+                    </div>
+                    <div class="alert alert-info small">Este link abrirá uma vitrine apenas com os vestidos selecionados.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const checks = document.querySelectorAll('.product-check');
+        const catalogBar = document.getElementById('catalogBar');
+        const countSpan = document.getElementById('selectedCount');
+
+        function updateBar() {
+            const selected = Array.from(checks).filter(c => c.checked).length;
+            catalogBar.style.display = selected > 0 ? 'flex' : 'none';
+            countSpan.innerText = selected;
+        }
+
+        checks.forEach(c => c.addEventListener('change', updateBar));
+        document.getElementById('selectAll').addEventListener('change', function() {
+            checks.forEach(c => c.checked = this.checked);
+            updateBar();
+        });
+
+        function gerarLink() {
+            const ids = Array.from(checks).filter(c => c.checked).map(c => c.value).join(',');
+            const url = window.location.origin + window.location.pathname.replace('produtos.php', 'catalogo.php') + '?ids=' + ids;
+            document.getElementById('generatedLink').value = url;
+            new bootstrap.Modal(document.getElementById('linkModal')).show();
+        }
+
+        function copiarLink() {
+            const input = document.getElementById('generatedLink');
+            input.select();
+            document.execCommand('copy');
+            alert('Link copiado com sucesso!');
+        }
+    </script>
 </body>
 </html>

@@ -230,3 +230,24 @@ body {
     align-items: center;
     gap: 20px;
 }
+
+/* Estilo do Dropdown no Hover */
+.nav-links-top .dropdown:hover .dropdown-menu {
+    display: block;
+    margin-top: 0;
+}
+
+.dropdown-menu {
+    background-color: var(--navy-blue);
+    border: 1px solid var(--yellow-brand);
+}
+
+.dropdown-item {
+    color: var(--yellow-brand);
+    font-weight: 500;
+}
+
+.dropdown-item:hover {
+    background-color: var(--yellow-brand);
+    color: var(--navy-blue);
+}

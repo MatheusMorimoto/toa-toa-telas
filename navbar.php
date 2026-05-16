@@ -16,8 +16,16 @@
 
     <div class="header-right-content">
         <div class="nav-links-top">
-            <a href="index.php" class="btn btn-outline-warning btn-sm me-1">Cadastro de produtos</a>
-            <a href="produtos.php" class="btn btn-outline-warning btn-sm me-1">Produtos Cadastrados</a>
+            <a href="cadastro_cliente.php" class="btn btn-outline-warning btn-sm me-1">Cadastro de Clientes</a>
+            <div class="dropdown d-inline-block">
+                <button class="btn btn-outline-warning btn-sm me-1 dropdown-toggle" type="button" id="dropdownProdutos" aria-expanded="false">
+                    Produtos
+                </button>
+                <ul class="dropdown-menu shadow" aria-labelledby="dropdownProdutos">
+                    <li><a class="dropdown-item" href="index.php">Cadastro de Produtos</a></li>
+                    <li><a class="dropdown-item" href="produtos.php">Produtos Cadastrados</a></li>
+                </ul>
+            </div>
         </div>
         <div class="search-container ms-3">
             <form action="pdv.php" method="POST">

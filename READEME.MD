@@ -1,4 +1,8 @@
-## TONALIDADE DAS CORES TOA TOA MODA FESTA 
+# Sistema Tôa Tôa Moda Festa
+
+Sistema de gestão integrada para lojas de moda festa, abrangendo controle de estoque, PDV, cadastro de clientes e geração de catálogos digitais.
+
+## 🎨 Identidade Visual (Paleta de Cores)
 
 Azul Profundo (Fundo): #001D3D
 
@@ -16,7 +20,22 @@ Vermelho Vivo (Círculo Superior): #E60000
 
 Usado no detalhe do ponto/círculo acima da logo. Serve como um ponto de atenção.
 
-## PERGUNTAS REALIZADAS E RESPOSTAS REALIZADAS 
+## 🛠️ Tecnologias e Arquitetura
+
+- **Frontend:** PHP 8.x + Bootstrap 5.3 (Interface Administrativa e PDV).
+- **Backend de Dados:** Node.js API (Hospedado no Render) conectando ao **Supabase (PostgreSQL)**.
+- **Integrações Externas:** API ViaCEP para preenchimento automático de endereços.
+- **Segurança:** Comunicação PHP-Node validada via `x-api-key`.
+
+## ⚙️ Configuração de Ambiente
+
+1. No arquivo `db.php`, certifique-se de que a variável `$api_key` corresponde à chave definida no servidor Node.js.
+2. Para rodar o servidor localmente:
+   ```bash
+   php -S localhost:8000
+   ```
+
+## 📋 Entrevista e Definição de Escopo
 
 1. Com o sistema, o que pretende?
 
@@ -50,46 +69,32 @@ R: Sim, criar um bom catálogo para aluguel e venda.
 
 R: Integração melhor para o atendimento e conseguir enviar o catálogo.
 
-## Requisitos do Sistema
-Para transformar essas anotações em um projeto de software (notebook/desktop), dividimos as necessidades da seguinte forma:
+## 🚀 Requisitos do Sistema
 
-Requisitos Funcionais (RF)
-Representam as funcionalidades diretas que o usuário terá no sistema.
+### Requisitos Funcionais (RF)
 
-RF01 - Gestão de Estoque: O sistema deve permitir o cadastro, entrada e saída de produtos (vestidos de festa).
+- **RF01 - Gestão de Estoque:** Cadastro, edição, visualização e **exclusão definitiva** de produtos (vestidos).
+- **RF02 - Gestão de Aluguéis:** Registro de histórico de locação com controle de datas.
+- **RF03 - Ponto de Venda (PDV):** Interface para registro de vendas rápidas com baixa automática de estoque.
+- **RF04 - Controle Financeiro:** Registro de fluxos por forma de pagamento (Dinheiro, PIX, Cartões).
+- **RF05 - Gestão de Clientes:** Cadastro completo com busca de CEP e histórico de interações.
+- **RF06 - Vitrine Digital:** Geração de links personalizados de produtos selecionados para envio via WhatsApp.
+- **RF07 - Relatórios:** Extração de dados sobre desempenho de vendas e disponibilidade.
 
-RF02 - Gestão de Aluguéis: O sistema deve registrar o histórico de locação, incluindo datas de retirada e devolução.
+### Requisitos Não Funcionais (RNF)
 
-RF03 - Gestão de Vendas: O sistema deve realizar o registro de vendas diretas.
+- **RNF01 - Usabilidade:** Interface adaptada para operação rápida em notebooks de balcão.
+- **RNF02 - Disponibilidade:** O catálogo público deve permanecer online independentemente do sistema local.
+- **RNF03 - Confiabilidade:** Transações de venda com rollback em caso de falha de conexão.
 
-RF04 - Controle Financeiro: O sistema deve registrar fluxos de caixa, segmentando por formas de pagamento (dinheiro, cartão de débito e crédito).
+## 📂 Comandos Úteis (Git/Deploy)
 
-RF05 - Cadastro de Clientes: O sistema deve permitir a formalização (cadastro) e histórico de cada cliente.
-
-RF06 - Geração de Catálogo Digital: O sistema deve gerar um catálogo (Web/WhatsApp) para que o vendedor possa enviar os produtos disponíveis aos clientes.
-
-RF07 - Relatórios de Gestão: O sistema deve fornecer dados sobre o desempenho da loja para facilitar a "automação" mencionada no médio prazo.
-
-## Requisitos Não Funcionais (RNF)
-Representam a qualidade, o desempenho e as restrições do sistema.
-
-RNF01 - Usabilidade: A interface deve ser simples e intuitiva, focada em agilizar o atendimento ao cliente.
-
-RNF02 - Portabilidade: Sendo um app para notebook, deve ser compatível com sistemas operacionais comuns (Windows/macOS).
-
-RNF03 - Disponibilidade: O catálogo web deve estar disponível 24/7 para consulta dos clientes.
-
-RNF04 - Integração: O sistema deve permitir o compartilhamento facilitado de informações via WhatsApp.
-
-RNF05 - Escalabilidade Interna: O sistema deve ser robusto o suficiente para suportar o crescimento do volume de vendas/aluguéis sem perda de performance.
-
-## supabase 
-
+```bash
 git add .
-git commit -m "Organizando projeto e adicionando segurança"
+git commit -m "Descricao da alteracao"
 git pull origin main --rebase
 git push origin main
-git push origin main --force
+```
 
-
-php -S localhost:8000
+---
+*Tôa Tôa Moda Festa - Cuiabá/MT*

@@ -29,10 +29,12 @@ function api_request($method, $endpoint, $data = null) {
     // Garante que a URL base termine com barra apenas se necessário
     $url = rtrim($api_base_url, '/');
     
-    if ($endpoint === '/') {
-        $url .= '/';
-    } elseif (!empty($endpoint)) {
-        $url .= (strpos($endpoint, '?') === 0) ? $endpoint : '/' . ltrim($endpoint, '/');
+    // Se o endpoint for apenas uma query string (ex: ?id=1), não adicionamos a barra extra
+    // Isso evita o erro "Cannot PUT /endpoint/"
+    if (strpos($endpoint, '?') === 0) {
+        $url .= $endpoint;
+    } else {
+        $url .= '/' . ltrim($endpoint, '/');
     }
 
     $options = [
@@ -87,5 +89,20 @@ function listarProdutos() {
 
 function buscarProduto($busca) {
     return api_request("GET", "/?busca=" . urlencode($busca));
+}
+
+function obterProdutoPorId($id) {
+    $resultado = api_request("GET", "/?id=" . urlencode($id));
+    // Se a API retornar uma lista, pega o primeiro item
+    if (is_array($resultado) && isset($resultado[0])) return $resultado[0];
+    return $resultado;
+}
+
+function editarProduto($id, $dados) {
+    return api_request("PUT", "/?id=" . urlencode($id), $dados);
+}
+
+function excluirProduto($id) {
+    return api_request("DELETE", "/?id=" . urlencode($id));
 }
 ?>

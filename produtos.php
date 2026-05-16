@@ -49,6 +49,20 @@ $produtos = $api_error ? [] : $result;
     <?php include_once 'navbar.php'; ?>
 
     <div class="container-fluid main-content mt-4">
+        <?php if (isset($_GET['editado'])): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-2"></i>Produto atualizado com sucesso!
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['excluido'])): ?>
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="bi bi-trash me-2"></i>Produto removido com sucesso.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
+
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="section-title mb-0"><i class="bi bi-box-seam me-2"></i>Produtos em Estoque</h4>
             <a href="catalogo.php" class="btn btn-warning-custom btn-sm shadow-sm">
@@ -125,7 +139,7 @@ $produtos = $api_error ? [] : $result;
                                     <td class="text-end price-tag">R$ <?php echo number_format((float)$venda, 2, ',', '.'); ?></td>
                                     <td class="text-end rental-tag">R$ <?php echo number_format((float)$aluguel, 2, ',', '.'); ?></td>
                                     <td class="text-end pe-3">
-                                        <button class="btn btn-sm btn-outline-secondary" title="Ver detalhes"><i class="bi bi-eye"></i></button>
+                                        <a href="editar_produto.php?id=<?php echo urlencode($id); ?>" class="btn btn-sm btn-outline-secondary" title="Ver detalhes"><i class="bi bi-eye"></i></a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -187,6 +201,14 @@ $produtos = $api_error ? [] : $result;
             document.execCommand('copy');
             alert('Link copiado com sucesso!');
         }
+
+        // Fecha os alertas automaticamente após 3 segundos
+        document.querySelectorAll('.alert').forEach(function(alert) {
+            setTimeout(function() {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }, 3000);
+        });
     </script>
 </body>
 </html>

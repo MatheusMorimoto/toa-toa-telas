@@ -92,8 +92,9 @@ R: Integração melhor para o atendimento e conseguir enviar o catálogo.
 ```bash
 git add .
 git commit -m "Descricao da alteracao"
-git pull origin main --rebase
+git branch -m master main
 git push origin main
+
 ```
 
 ---

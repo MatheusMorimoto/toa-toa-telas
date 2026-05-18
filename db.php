@@ -1,13 +1,27 @@
 <?php
+// Aumenta o tempo de execução do PHP globalmente para lidar com o "cold start" do Render
+set_time_limit(0);
+ini_set('max_execution_time', 0);
+
 // Configurações do Supabase (PostgreSQL)
-// NOTA: Estas configurações são para conexão direta via PDO.
-// Se você está usando a API Node.js, elas não são usadas diretamente pelo PHP.
-// Mantenho-as aqui caso você decida voltar à conexão direta.
 $host = "db.idxyfkeodaettqbjuiak.supabase.co";
 $port = "5432";
 $user = "postgres";
 $pass = "M@v!21019425"; 
 $dbname = "postgres";
+
+// Inicialização da conexão MySQLi (Necessária para cadastro_cliente.php e finalizar_venda.php)
+// O padrão para XAMPP/WAMP é host: localhost, user: root, senha: "", banco: produtos_cadastrados
+@mysqli_report(MYSQLI_REPORT_OFF);
+try {
+    $conn = @new mysqli("localhost", "root", "", "produtos_cadastrados");
+    if ($conn->connect_error) { 
+        // Note: mysqli não conectará ao host do Supabase (PostgreSQL), mas mantemos para evitar erro de variável nula
+        $conn = @new mysqli($host, $user, $pass, $dbname); 
+    }
+} catch (Exception $e) {
+    $conn = null;
+}
 
 // URL Base da sua API Node.js
 /** 
@@ -25,16 +39,18 @@ $api_key = "sua_chave_de_comunicacao_php_node";
  */
 function api_request($method, $endpoint, $data = null) {
     global $api_base_url, $api_key;
-
-    // Garante que a URL base termine com barra apenas se necessário
-    $url = rtrim($api_base_url, '/');
     
-    // Se o endpoint for apenas uma query string (ex: ?id=1), não adicionamos a barra extra
-    // Isso evita o erro "Cannot PUT /endpoint/"
-    if (strpos($endpoint, '?') === 0) {
-        $url .= $endpoint;
+    if (strpos($endpoint, '/toa-toa-clientes') === 0) {
+        // Se for endpoint de clientes, a URL já é completa após o domínio
+        $url = "https://api-toa-a-toa-2.onrender.com" . $endpoint;
     } else {
-        $url .= '/' . ltrim($endpoint, '/');
+        // Lógica para produtos (mantendo o que já funcionava)
+        $url = rtrim($api_base_url, '/');
+        if (strpos($endpoint, '?') === 0) {
+            $url .= $endpoint;
+        } else {
+            $url .= '/' . ltrim($endpoint, '/');
+        }
     }
 
     $options = [
@@ -44,7 +60,7 @@ function api_request($method, $endpoint, $data = null) {
             'method'  => $method,
             'content' => $data ? json_encode($data) : null,
             'ignore_errors' => true,
-            'timeout' => 30 // Aumentado para 30s para suportar o "cold start" do Render
+            'timeout' => 90 // Aumentado para 90 segundos para o "cold start" do Render
         ]
     ];
 
@@ -104,5 +120,22 @@ function editarProduto($id, $dados) {
 
 function excluirProduto($id) {
     return api_request("DELETE", "/?id=" . urlencode($id));
+}
+
+// FUNÇÕES PARA CLIENTES (Novas)
+function listarClientes() {
+    return api_request("GET", "/toa-toa-clientes");
+}
+
+function buscarCliente($id) {
+    return api_request("GET", "/toa-toa-clientes/" . $id);
+}
+
+function salvarCliente($dados) {
+    return api_request("POST", "/toa-toa-clientes", $dados);
+}
+
+function editarCliente($id, $dados) {
+    return api_request("PUT", "/toa-toa-clientes/" . $id, $dados);
 }
 ?>

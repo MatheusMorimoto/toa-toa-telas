@@ -4,56 +4,74 @@ include 'db.php';
 // Inicializa a variável $cliente com campos vazios para evitar erros de "Undefined variable"
 $cliente = [
     'id' => '',
-    'nome' => '',
+    'nome_completo' => '',
     'cpf' => '',
-    'telefone' => '',
+    'rg' => '',
+    'whatsapp' => '',
+    'tipo_contato_1' => '',
+    'telefone_secundario' => '',
+    'tipo_contato_2' => '',
+    'email' => '',
     'cep' => '',
     'rua' => '',
     'bairro' => '',
     'numero' => '',
     'cidade' => '',
-    'complemento' => ''
+    'complemento' => '',
+    'preferencias' => '',
+    'data_evento' => ''
 ];
 
 // Alterado para POST por segurança
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["nome"])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["nome_completo"])) {
     $id = isset($_POST["id"]) ? $_POST["id"] : '';
-    $nome = $_POST["nome"];
+    $nome_completo = $_POST["nome_completo"];
     $cpf = $_POST["cpf"]; 
-    $telefone = $_POST["telefone"];
+    $rg = $_POST["rg"];
+    $whatsapp = $_POST["whatsapp"];
+    $tipo_contato_1 = $_POST["tipo_contato_1"];
+    $telefone_secundario = $_POST["telefone_secundario"];
+    $tipo_contato_2 = $_POST["tipo_contato_2"];
+    $email = $_POST["email"];
     $cep = $_POST["cep"];
-    $rua = $_POST["rua"];
-    $bairro = $_POST["bairro"];
-    $numerocasa = $_POST["numero"];
-    $cidade = $_POST["cidade"];
-    $complemento = $_POST["complemento"];
+    $preferencias = $_POST["preferencias"];
+    $data_evento = $_POST["data_evento"];
+    
+    // Monta o endereço completo para o campo 'endereco' do banco
+    $endereco_completo = $_POST["rua"] . ", " . $_POST["numero"] . " - " . $_POST["bairro"] . ", " . $_POST["cidade"] . " (" . $_POST["complemento"] . ")";
+
+    $dadosCliente = [
+        "nome_completo" => $nome_completo,
+        "cpf" => $cpf,
+        "rg" => $rg,
+        "whatsapp" => $whatsapp,
+        "tipo_contato_1" => $tipo_contato_1,
+        "telefone_secundario" => $telefone_secundario,
+        "tipo_contato_2" => $tipo_contato_2,
+        "email" => $email,
+        "cep" => $cep,
+        "endereco" => $endereco_completo,
+        "preferencias" => $preferencias,
+        "data_evento" => $data_evento
+    ];
 
     if (!empty($id)) {
-        // Se tem ID, ATUALIZA o cliente existente
-        $stmt = $conn->prepare("UPDATE clientes SET nome = ?, cpf = ?, telefone = ?, cep = ?, rua = ?, bairro = ?, numero_casa = ?, cidade = ?, complemento = ? WHERE id = ?");
-        $stmt->bind_param("sssssssssi", $nome, $cpf, $telefone, $cep, $rua, $bairro, $numerocasa, $cidade, $complemento, $id);
+        $res = editarCliente($id, $dadosCliente);
     } else {
-        // Se NÃO tem ID, CADASTRA um novo cliente
-        $stmt = $conn->prepare("INSERT INTO clientes (nome, cpf, telefone, cep, rua, bairro, numero_casa, cidade, complemento) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssssssss", $nome, $cpf, $telefone, $cep, $rua, $bairro, $numerocasa, $cidade, $complemento);
+        $res = salvarCliente($dadosCliente);
     }
 
-    $stmt->execute();
-
-    header("Location: cadastro_cliente.php?sucesso=1");
-    exit();
+    if (!isset($res['error'])) {
+        header("Location: cadastro_cliente.php?sucesso=1");
+        exit();
+    }
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET["id"]) && !empty($_GET["id"])) {
-    $id = $_GET["id"];
-    $stmt = $conn->prepare("SELECT * FROM clientes WHERE id = ?");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $dados = $stmt->get_result()->fetch_assoc();
-    if ($dados) {
-        $cliente = $dados;
-        // Mapeia o nome da coluna do banco para o nome usado no seu HTML
-        $cliente['numero'] = $dados['numero_casa'];
+    $res = buscarCliente($_GET["id"]);
+    if ($res && !isset($res['error'])) {
+        // Mescla os dados recebidos com os valores padrão para evitar avisos de chaves inexistentes
+        $cliente = array_merge($cliente, $res);
     }
 }
 ?>
@@ -85,49 +103,84 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET["id"]) && !empty($_GET["i
 
         <form id="cadastro" method="POST">
             <div class="form-card shadow-sm p-4 bg-white rounded">
-                <input type="hidden" name="id" value="<?= htmlspecialchars($cliente['id']) ?>">
+                <input type="hidden" name="id" value="<?= htmlspecialchars($cliente['id'] ?? '') ?>">
                 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="nome" class="form-label">Nome Completo</label>
-                        <input type="text" id="nome" name="nome" class="form-control" value="<?= htmlspecialchars($cliente['nome']) ?>" required>
+                        <label for="nome_completo" class="form-label">Nome Completo</label>
+                        <input type="text" id="nome_completo" name="nome_completo" class="form-control" value="<?= htmlspecialchars($cliente['nome_completo'] ?? '') ?>" required>
                     </div>
                     <div class="col-md-3">
                         <label for="cpf" class="form-label">CPF</label>
-                        <input type="text" id="cpf" name="cpf" class="form-control" value="<?= htmlspecialchars($cliente['cpf']) ?>" required>
+                        <input type="text" id="cpf" name="cpf" class="form-control" value="<?= htmlspecialchars($cliente['cpf'] ?? '') ?>" required>
                     </div>
                     <div class="col-md-3">
-                        <label for="telefone" class="form-label">Telefone / WhatsApp</label>
-                        <input type="text" id="telefone" name="telefone" class="form-control" value="<?= htmlspecialchars($cliente['telefone']) ?>" required>
+                        <label for="rg" class="form-label">RG</label>
+                        <input type="text" id="rg" name="rg" class="form-control" value="<?= htmlspecialchars($cliente['rg'] ?? '') ?>">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label for="whatsapp" class="form-label">WhatsApp (Principal)</label>
+                        <input type="text" id="whatsapp" name="whatsapp" class="form-control" value="<?= htmlspecialchars($cliente['whatsapp'] ?? '') ?>" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="tipo_contato_1" class="form-label">Tipo</label>
+                        <input type="text" name="tipo_contato_1" class="form-control" placeholder="Ex: Pessoal, Noiva" value="<?= htmlspecialchars($cliente['tipo_contato_1'] ?? '') ?>">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="telefone_secundario" class="form-label">Telefone Secundário</label>
+                        <input type="text" name="telefone_secundario" class="form-control" value="<?= htmlspecialchars($cliente['telefone_secundario'] ?? '') ?>">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="tipo_contato_2" class="form-label">Parentesco/Tipo</label>
+                        <input type="text" name="tipo_contato_2" class="form-control" placeholder="Ex: Mãe, Noivo" value="<?= htmlspecialchars($cliente['tipo_contato_2'] ?? '') ?>">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">E-mail</label>
+                        <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($cliente['email'] ?? '') ?>">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="data_evento" class="form-label">Data do Evento</label>
+                        <input type="date" name="data_evento" class="form-control" value="<?= htmlspecialchars($cliente['data_evento'] ?? '') ?>">
                     </div>
                 </div>
 
                 <div class="row mb-3">
                     <div class="col-md-2">
                         <label for="cep" class="form-label">CEP (Somente números)</label>
-                        <input type="text" id="cep" name="cep" class="form-control" maxlength="8" value="<?= htmlspecialchars($cliente['cep']) ?>" required>
+                        <input type="text" id="cep" name="cep" class="form-control" maxlength="8" value="<?= htmlspecialchars($cliente['cep'] ?? '') ?>" required>
                     </div>
                     <div class="col-md-4">
                         <label for="rua" class="form-label">Rua / Logradouro</label>
-                        <input type="text" id="rua" name="rua" class="form-control" value="<?= htmlspecialchars($cliente['rua']) ?>" required>
+                        <input type="text" id="rua" name="rua" class="form-control" value="<?= htmlspecialchars($cliente['rua'] ?? '') ?>" required>
                     </div>
                     <div class="col-md-3">
                         <label for="bairro" class="form-label">Bairro</label>
-                        <input type="text" id="bairro" name="bairro" class="form-control" value="<?= htmlspecialchars($cliente['bairro']) ?>" required>
+                        <input type="text" id="bairro" name="bairro" class="form-control" value="<?= htmlspecialchars($cliente['bairro'] ?? '') ?>" required>
                     </div>
                     <div class="col-md-1">
                         <label for="numero" class="form-label">Nº</label>
-                        <input type="text" id="numero" name="numero" class="form-control" value="<?= htmlspecialchars($cliente['numero']) ?>" required>
+                        <input type="text" id="numero" name="numero" class="form-control" value="<?= htmlspecialchars($cliente['numero'] ?? '') ?>" required>
                     </div>
                     <div class="col-md-2">
                         <label for="cidade" class="form-label">Cidade</label>
-                        <input type="text" id="cidade" name="cidade" class="form-control" value="<?= htmlspecialchars($cliente['cidade']) ?>" required>
+                        <input type="text" id="cidade" name="cidade" class="form-control" value="<?= htmlspecialchars($cliente['cidade'] ?? '') ?>" required>
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="complemento" class="form-label">Complemento / Referência</label>
-                    <input type="text" id="complemento" name="complemento" class="form-control" value="<?= htmlspecialchars($cliente['complemento']) ?>">
+                    <input type="text" id="complemento" name="complemento" class="form-control" value="<?= htmlspecialchars($cliente['complemento'] ?? '') ?>">
+                </div>
+
+                <div class="mb-3">
+                    <label for="preferencias" class="form-label">Preferências / Observações</label>
+                    <textarea name="preferencias" class="form-control" rows="3"><?= htmlspecialchars($cliente['preferencias'] ?? '') ?></textarea>
                 </div>
             </div>
 

@@ -1,6 +1,6 @@
-# Sistema Tôa Tôa Moda Festa
+# 👗 Sistema Tôa Tôa Moda Festa
 
-Sistema de gestão integrada para lojas de moda festa, abrangendo controle de estoque, PDV, cadastro de clientes e geração de catálogos digitais.
+Sistema de gestão integrada (ERP/CRM) para lojas de moda festa, abrangendo controle de estoque de luxo, PDV, gestão de clientes e geração de catálogos digitais dinâmicos.
 
 ## 🎨 Identidade Visual (Paleta de Cores)
 
@@ -22,18 +22,26 @@ Usado no detalhe do ponto/círculo acima da logo. Serve como um ponto de atenç�
 
 ## 🛠️ Tecnologias e Arquitetura
 
-- **Frontend:** PHP 8.x + Bootstrap 5.3 (Interface Administrativa e PDV).
-- **Backend de Dados:** Node.js API (Hospedado no Render) conectando ao **Supabase (PostgreSQL)**.
-- **Integrações Externas:** API ViaCEP para preenchimento automático de endereços.
-- **Segurança:** Comunicação PHP-Node validada via `x-api-key`.
+- **Frontend:** PHP 8.1+ & Bootstrap 5.3 (Interface Administrativa).
+- **Backend de Dados:** Node.js API (Express) hospedada no **Render**.
+- **Banco de Dados Principal:** PostgreSQL via **Supabase**.
+- **Integrações:** API ViaCEP (Endereços) e Supabase Storage (Imagens).
+- **Segurança:** Comunicação validada via Header `x-api-key`.
 
-## ⚙️ Configuração de Ambiente
+## ⚙️ Configuração e Instalação
 
 1. No arquivo `db.php`, certifique-se de que a variável `$api_key` corresponde à chave definida no servidor Node.js.
 2. Para rodar o servidor localmente:
    ```bash
    php -S localhost:8000
    ```
+
+## 📦 Módulos Implementados
+
+- **Gestão de Estoque:** CRUD completo com upload de fotos para a nuvem.
+- **CRM de Clientes:** Cadastro detalhado com histórico de eventos e busca por CEP.
+- **PDV (Ponto de Venda):** Sistema de carrinho com baixa automática de estoque e transações seguras.
+- **Vitrine Digital:** Gerador de links de catálogo para compartilhamento via WhatsApp.
 
 ## 📋 Entrevista e Definição de Escopo
 
@@ -86,15 +94,24 @@ R: Integração melhor para o atendimento e conseguir enviar o catálogo.
 - **RNF01 - Usabilidade:** Interface adaptada para operação rápida em notebooks de balcão.
 - **RNF02 - Disponibilidade:** O catálogo público deve permanecer online independentemente do sistema local.
 - **RNF03 - Confiabilidade:** Transações de venda com rollback em caso de falha de conexão.
+- **RNF04 - Performance:** Otimização para "cold start" de servidores gratuitos (timeout estendido para 90s).
 
-## 📂 Comandos Úteis (Git/Deploy)
+## 🗄️ Estrutura de Dados (Local/PDV)
+Para o funcionamento do PDV local, certifique-se de ter o banco `produtos_cadastrados` com as tabelas:
+```sql
+CREATE TABLE vendas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    total DECIMAL(10,2),
+    data_venda TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-```bash
-git add .
-git commit -m "Descricao da alteracao"
-git branch -m master main
-git push origin main
-
+CREATE TABLE itens_venda (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    venda_id INT,
+    produto_id INT,
+    quantidade INT,
+    preco_unitario DECIMAL(10,2)
+);
 ```
 
 ---

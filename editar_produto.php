@@ -3,7 +3,7 @@ include_once 'db.php';
 
 $id = $_GET['id'] ?? null;
 if (!$id) {
-    header("Location: pdv.php");
+    header("Location: produtos.php");
     exit;
 }
 
@@ -22,7 +22,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'excluir') {
     if (isset($res['error'])) {
         $mensagem = "<div class='alert alert-danger'><strong>Erro ao excluir:</strong> " . ($res['detalhes'] ?? 'Erro na API') . "</div>";
     } else {
-        header("Location: pdv.php?excluido=1");
+        header("Location: produtos.php?excluido=1");
         exit;
     }
 }
@@ -69,8 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Tratamento de erro idêntico ao salvar_produto.php
         echo "<div class='alert alert-danger'><strong>Erro ao salvar:</strong> " . $res['error'] . "<br><strong>Detalhe Técnico:</strong> " . ($res['detalhes'] ?? 'Verifique o servidor') . "</div>";
     } else {
-        // Sucesso: Redireciona para o PDV
-        header("Location: pdv.php?edit_sucesso=1");
+        // Sucesso: Redireciona para Produtos Cadastrados
+        header("Location: produtos.php?editado=1");
         exit;
     }
 }
@@ -100,7 +100,7 @@ $imgAtual = !empty($produto['imagem']) ? $produto['imagem'] : 'placeholder.jpg';
     <div class="container-fluid main-content">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="text-dark"><i class="bi bi-pencil-square me-2"></i>Editar Produto #<?= htmlspecialchars($id) ?></h2>
-            <a href="pdv.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Voltar ao PDV</a>
+            <a href="produtos.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Voltar aos Produtos</a>
         </div>
         
         <?= $mensagem ?>

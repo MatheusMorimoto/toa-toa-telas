@@ -19,8 +19,7 @@ $cliente = [
     'cidade' => '',
     'complemento' => '',
     'preferencias' => '',
-    'data_evento' => '',
-    'imagem' => ''
+    'data_evento' => ''
 ];
 
 // Alterado para POST por segurança
@@ -37,23 +36,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["nome_completo"])) {
     $cep = $_POST["cep"];
     $preferencias = $_POST["preferencias"];
     $data_evento = $_POST["data_evento"];
-
-    // Processamento da Imagem (Nomenclatura: timestamp_vestido.ext / Pasta: produtos/)
-    $nomeImagem = $cliente['imagem'] ?? '';
-    if (isset($_FILES['imagemCliente']) && $_FILES['imagemCliente']['error'] === 0) {
-        $extensao = strtolower(pathinfo($_FILES['imagemCliente']['name'], PATHINFO_EXTENSION));
-        $permitidos = ['jpg', 'jpeg', 'png', 'webp'];
-        
-        if (in_array($extensao, $permitidos)) {
-            // Seguindo a regra: Pasta produtos/ + timestamp + _vestido.ext
-            $nomeImagem = "produtos/" . time() . "_vestido." . $extensao;
-            
-            if (!uploadImagemSupabase($_FILES['imagemCliente']['tmp_name'], $nomeImagem)) {
-                echo "<div class='alert alert-danger'>Erro ao enviar imagem para o Supabase.</div>";
-                exit;
-            }
-        }
-    }
     
     // Monta o endereço completo para o campo 'endereco' do banco
     $endereco_completo = $_POST["rua"] . ", " . $_POST["numero"] . " - " . $_POST["bairro"] . ", " . $_POST["cidade"] . " (" . $_POST["complemento"] . ")";
@@ -70,8 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["nome_completo"])) {
         "cep" => $cep,
         "endereco" => $endereco_completo,
         "preferencias" => $preferencias,
-        "data_evento" => $data_evento,
-        "imagem" => $nomeImagem
+        "data_evento" => $data_evento
     ];
 
     if (!empty($id)) {
@@ -120,10 +101,8 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET["id"]) && !empty($_GET["i
             <h2 class="text-dark"><i class="bi bi-person-plus me-2"></i> <?= !empty($cliente['id']) ? 'Editar Cliente' : 'Novo Cadastro de Cliente' ?></h2>
         </div>
 
-        <form id="cadastro" method="POST" enctype="multipart/form-data">
-            <div class="row g-0 form-card shadow-sm">
-                <!-- Seção de Dados -->
-                <div class="col-lg-8 p-4 border-end">
+        <form id="cadastro" method="POST">
+            <div class="form-card shadow-sm p-4">
                 <input type="hidden" name="id" value="<?= htmlspecialchars($cliente['id'] ?? '') ?>">
                 
                 <div class="row mb-3">
@@ -203,27 +182,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET["id"]) && !empty($_GET["i
                     <label for="preferencias" class="form-label">Preferências / Observações</label>
                     <textarea name="preferencias" class="form-control" rows="3"><?= htmlspecialchars($cliente['preferencias'] ?? '') ?></textarea>
                 </div>
-                </div>
-
-                <!-- Seção de Imagem (Painel Lateral Direto conforme padrão do sistema) -->
-                <div class="col-lg-4 image-panel">
-                    <h5 class="section-title">Foto de Referência</h5>
-                    <div class="image-preview" id="imagePreviewContainer">
-                        <?php $urlImg = !empty($cliente['imagem']) ? "https://idxyfkeodaettqbjuiak.supabase.co/storage/v1/object/public/toa-toa-moda-festa/" . $cliente['imagem'] : ""; ?>
-                        <img src="<?= htmlspecialchars($urlImg) ?>" alt="Preview" id="previewImg" style="<?= !empty($urlImg) ? 'display: block;' : 'display: none;' ?>">
-                        <div id="previewPlaceholder" style="<?= !empty($urlImg) ? 'display: none;' : 'display: block;' ?>">
-                            <i class="bi bi-camera" style="font-size: 3rem; color: #ccc;"></i>
-                            <p class="text-muted">Anexar foto da cliente ou vestido</p>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <label for="imagemCliente" class="btn btn-upload w-100">
-                            <i class="bi bi-plus-circle me-2"></i> Selecionar Imagem
-                        </label>
-                        <input type="file" class="form-control d-none" id="imagemCliente" name="imagemCliente" accept="image/*">
-                        <p class="text-muted small mt-2">Pasta: produtos/ | Upsert: Off</p>
-                    </div>
-                </div>
             </div>
 
             <div class="action-buttons mt-4">
@@ -235,24 +193,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET["id"]) && !empty($_GET["i
     </div>
 
 <script>
-    // Lógica de Preview da Imagem
-    const imgInput = document.getElementById('imagemCliente');
-    const previewImg = document.getElementById('previewImg');
-    const placeholder = document.getElementById('previewPlaceholder');
-
-    imgInput.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImg.src = e.target.result;
-                previewImg.style.display = 'block';
-                placeholder.style.display = 'none';
-            }
-            reader.readAsDataURL(file);
-        }
-    });
-
     const cepInput = document.getElementById('cep');
     
     cepInput.addEventListener('blur', () => {
@@ -276,15 +216,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET["id"]) && !empty($_GET["i
             }
         }
     });
-
-    // Faz a mensagem de sucesso desaparecer após 3 segundos (3000ms)
-    const alertElement = document.querySelector('.alert');
-    if (alertElement) {
-        setTimeout(() => {
-            const bsAlert = new bootstrap.Alert(alertElement);
-            bsAlert.close();
-        }, 3000);
-    }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>

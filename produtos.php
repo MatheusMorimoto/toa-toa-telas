@@ -16,13 +16,7 @@ $produtos = $api_error ? [] : $result;
     <title>Tôa Tôa - Catálogo de Produtos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <!-- Refresh automático removido: o catálogo agora é carregado apenas sob demanda do usuário -->
     <link href="index.css" rel="stylesheet">
-    <!-- 
-         Refatoração de Engenharia: 
-         - Removido qualquer script de refresh (setInterval/setTimeout).
-         - Sistema opera estritamente sob demanda (Manual).
-    -->
     <style>
         :root {
             --brand-navy: #001D3D;
@@ -201,14 +195,6 @@ $produtos = $api_error ? [] : $result;
             document.execCommand('copy');
             alert('Link copiado com sucesso!');
         }
-
-        // Fecha os alertas automaticamente após 3 segundos
-        document.querySelectorAll('.alert').forEach(function(alert) {
-            setTimeout(function() {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            }, 3000);
-        });
     </script>
 </body>
 </html>

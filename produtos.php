@@ -122,8 +122,8 @@ $produtos = $api_error ? [] : $result;
                                             $imgNome  = $p['imagem']        ?? '';
                                             $dataAq   = $p['validade']      ?? '';
 
-                                            $caminhoImg = (!empty($imgNome) && file_exists('imagens/' . $imgNome)) 
-                                                          ? 'imagens/' . $imgNome 
+                                            $caminhoImg = (!empty($imgNome)) 
+                                                          ? "https://idxyfkeodaettqbjuiak.supabase.co/storage/v1/object/public/toa-toa-moda-festa/" . $imgNome 
                                                           : 'toatoa.png';
                                         ?>
                                         <img src="<?php echo htmlspecialchars($caminhoImg); ?>" 

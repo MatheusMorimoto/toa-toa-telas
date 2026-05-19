@@ -13,10 +13,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $nomeImagem = "produto_" . uniqid() . "." . $extensao;
+        $nomeImagem = "produtos/" . time() . "_vestido." . $extensao;
         
-        if (!is_dir('imagens')) mkdir('imagens', 0777, true);
-        move_uploaded_file($_FILES['imagemProduto']['tmp_name'], 'imagens/' . $nomeImagem);
+        // Envia direto para o Supabase Bucket
+        if (!uploadImagemSupabase($_FILES['imagemProduto']['tmp_name'], $nomeImagem)) {
+            echo "<div class='alert alert-danger'>Erro ao enviar imagem para o Supabase.</div>"; exit;
+        }
     }
 
     // 2. Mapeia os dados seguindo EXATAMENTE o exemplo JSON da sua documentação de API

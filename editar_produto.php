@@ -42,10 +42,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $nomeImagem = "produto_" . uniqid() . "." . $extensao;
+        $nomeImagem = "produtos/" . time() . "_vestido." . $extensao;
         
-        if (!is_dir('imagens')) mkdir('imagens', 0777, true);
-        move_uploaded_file($_FILES['imagemProduto']['tmp_name'], 'imagens/' . $nomeImagem);
+        // Envia direto para o Supabase Bucket
+        if (!uploadImagemSupabase($_FILES['imagemProduto']['tmp_name'], $nomeImagem)) {
+            echo "<div class='alert alert-danger'>Erro ao enviar nova imagem para o Supabase.</div>"; exit;
+        }
     }
 
     // 2. Mapeia os dados seguindo EXATAMENTE o exemplo do salvar_produto.php
@@ -156,7 +158,8 @@ $imgAtual = !empty($produto['imagem']) ? $produto['imagem'] : 'placeholder.jpg';
                 <div class="col-lg-4 image-panel">
                     <h5 class="section-title">Foto do Produto</h5>
                     <div class="image-preview" id="imagePreviewContainer">
-                        <img src="imagens/<?= htmlspecialchars($imgAtual) ?>" alt="Preview" id="previewImg" style="display: block;">
+                        <?php $urlImg = "https://idxyfkeodaettqbjuiak.supabase.co/storage/v1/object/public/toa-toa-moda-festa/" . $imgAtual; ?>
+                        <img src="<?= htmlspecialchars($urlImg) ?>" alt="Preview" id="previewImg" style="display: block;" onerror="this.src='toatoa.png'">
                     </div>
                     <div class="mt-3">
                         <label for="imagemProduto" class="btn btn-upload w-100">

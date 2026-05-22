@@ -44,8 +44,8 @@
                 </ul>
             </div>
         </div>
-        <div class="search-container ms-3">
-            <form action="pdv.php" method="POST">
+        <div class="search-container ms-3"> 
+            <form action="produtos.php" method="GET">
                 <input type="text" name="busca" class="form-control" placeholder="Busca rápida...">
             </form>
         </div>

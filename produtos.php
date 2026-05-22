@@ -1,8 +1,15 @@
 <?php
 include_once 'db.php';
 
-// Busca os produtos na API Node.js/Supabase
-$result = listarProdutos();
+// Verifica se há um termo de busca vindo da barra de navegação
+$busca = $_GET['busca'] ?? null;
+
+if (!empty($busca)) {
+    $result = buscarProduto($busca);
+} else {
+    // Busca todos os produtos se não houver pesquisa
+    $result = listarProdutos();
+}
 
 // Verifica se houve erro na API
 $api_error = isset($result['error']) ? $result : null;

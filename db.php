@@ -210,6 +210,10 @@ function listarClientes() {
     return api_request("GET", "/toa-toa-clientes");
 }
 
+function pesquisarClientes($termo) {
+    return api_request("GET", "/toa-toa-clientes?busca=" . urlencode($termo));
+}
+
 function buscarCliente($id) {
     return api_request("GET", "/toa-toa-clientes/" . $id);
 }

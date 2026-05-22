@@ -1,6 +1,8 @@
 <?php
 include 'db.php';
 
+$isViewMode = isset($_GET['view']) && $_GET['view'] == '1';
+
 // Inicializa a variável $cliente com campos vazios para evitar erros de "Undefined variable"
 $cliente = [
     'id' => '',
@@ -23,7 +25,7 @@ $cliente = [
 ];
 
 // Alterado para POST por segurança
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["nome_completo"])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["nome_completo"]) && !$isViewMode) {
     $id = isset($_POST["id"]) ? $_POST["id"] : '';
     $nome_completo = $_POST["nome_completo"];
     $cpf = $_POST["cpf"]; 
@@ -98,97 +100,103 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET["id"]) && !empty($_GET["i
         <?php endif; ?>
 
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="text-dark"><i class="bi bi-person-plus me-2"></i> <?= !empty($cliente['id']) ? 'Editar Cliente' : 'Novo Cadastro de Cliente' ?></h2>
+            <h2 class="text-dark"><i class="bi bi-person-plus me-2"></i> 
+                <?= $isViewMode ? 'Visualizar Cliente' : (!empty($cliente['id']) ? 'Editar Cliente' : 'Novo Cadastro de Cliente') ?>
+            </h2>
+            <a href="clientes_cadastrados.php" class="btn btn-outline-secondary shadow-sm"><i class="bi bi-list-ul me-2"></i> Ver Todos os Clientes</a>
         </div>
 
         <form id="cadastro" method="POST">
             <div class="form-card shadow-sm p-4">
                 <input type="hidden" name="id" value="<?= htmlspecialchars($cliente['id'] ?? '') ?>">
+                <?php $disabled = $isViewMode ? 'disabled' : ''; ?>
                 
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="nome_completo" class="form-label">Nome Completo</label>
-                        <input type="text" id="nome_completo" name="nome_completo" class="form-control" value="<?= htmlspecialchars($cliente['nome_completo'] ?? '') ?>" required>
+                        <input type="text" id="nome_completo" name="nome_completo" class="form-control" value="<?= htmlspecialchars($cliente['nome_completo'] ?? '') ?>" required <?= $disabled ?>>
                     </div>
                     <div class="col-md-3">
                         <label for="cpf" class="form-label">CPF</label>
-                        <input type="text" id="cpf" name="cpf" class="form-control" value="<?= htmlspecialchars($cliente['cpf'] ?? '') ?>" required>
+                        <input type="text" id="cpf" name="cpf" class="form-control" value="<?= htmlspecialchars($cliente['cpf'] ?? '') ?>" required <?= $disabled ?>>
                     </div>
                     <div class="col-md-3">
                         <label for="rg" class="form-label">RG</label>
-                        <input type="text" id="rg" name="rg" class="form-control" value="<?= htmlspecialchars($cliente['rg'] ?? '') ?>">
+                        <input type="text" id="rg" name="rg" class="form-control" value="<?= htmlspecialchars($cliente['rg'] ?? '') ?>" <?= $disabled ?>>
                     </div>
                 </div>
 
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <label for="whatsapp" class="form-label">WhatsApp (Principal)</label>
-                        <input type="text" id="whatsapp" name="whatsapp" class="form-control" value="<?= htmlspecialchars($cliente['whatsapp'] ?? '') ?>" required>
+                        <input type="text" id="whatsapp" name="whatsapp" class="form-control" value="<?= htmlspecialchars($cliente['whatsapp'] ?? '') ?>" required <?= $disabled ?>>
                     </div>
                     <div class="col-md-3">
                         <label for="tipo_contato_1" class="form-label">Tipo</label>
-                        <input type="text" name="tipo_contato_1" class="form-control" placeholder="Ex: Pessoal, Noiva" value="<?= htmlspecialchars($cliente['tipo_contato_1'] ?? '') ?>">
+                        <input type="text" name="tipo_contato_1" class="form-control" placeholder="Ex: Pessoal, Noiva" value="<?= htmlspecialchars($cliente['tipo_contato_1'] ?? '') ?>" <?= $disabled ?>>
                     </div>
                     <div class="col-md-3">
                         <label for="telefone_secundario" class="form-label">Telefone Secundário</label>
-                        <input type="text" name="telefone_secundario" class="form-control" value="<?= htmlspecialchars($cliente['telefone_secundario'] ?? '') ?>">
+                        <input type="text" name="telefone_secundario" class="form-control" value="<?= htmlspecialchars($cliente['telefone_secundario'] ?? '') ?>" <?= $disabled ?>>
                     </div>
                     <div class="col-md-3">
                         <label for="tipo_contato_2" class="form-label">Parentesco/Tipo</label>
-                        <input type="text" name="tipo_contato_2" class="form-control" placeholder="Ex: Mãe, Noivo" value="<?= htmlspecialchars($cliente['tipo_contato_2'] ?? '') ?>">
+                        <input type="text" name="tipo_contato_2" class="form-control" placeholder="Ex: Mãe, Noivo" value="<?= htmlspecialchars($cliente['tipo_contato_2'] ?? '') ?>" <?= $disabled ?>>
                     </div>
                 </div>
 
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="email" class="form-label">E-mail</label>
-                        <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($cliente['email'] ?? '') ?>">
+                        <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($cliente['email'] ?? '') ?>" <?= $disabled ?>>
                     </div>
                     <div class="col-md-6">
-                        <label for="data_evento" class="form-label">Data do Evento</label>
-                        <input type="date" name="data_evento" class="form-control" value="<?= htmlspecialchars($cliente['data_evento'] ?? '') ?>">
+                        <label for="data_evento" class="form-label">Nascimento</label>
+                        <input type="date" name="data_evento" class="form-control" value="<?= htmlspecialchars($cliente['data_evento'] ?? '') ?>" <?= $disabled ?>>
                     </div>
                 </div>
 
                 <div class="row mb-3">
                     <div class="col-md-2">
                         <label for="cep" class="form-label">CEP (Somente números)</label>
-                        <input type="text" id="cep" name="cep" class="form-control" maxlength="8" value="<?= htmlspecialchars($cliente['cep'] ?? '') ?>" required>
+                        <input type="text" id="cep" name="cep" class="form-control" maxlength="8" value="<?= htmlspecialchars($cliente['cep'] ?? '') ?>" required <?= $disabled ?>>
                     </div>
                     <div class="col-md-4">
                         <label for="rua" class="form-label">Rua / Logradouro</label>
-                        <input type="text" id="rua" name="rua" class="form-control" value="<?= htmlspecialchars($cliente['rua'] ?? '') ?>" required>
+                        <input type="text" id="rua" name="rua" class="form-control" value="<?= htmlspecialchars($cliente['rua'] ?? '') ?>" required <?= $disabled ?>>
                     </div>
                     <div class="col-md-3">
                         <label for="bairro" class="form-label">Bairro</label>
-                        <input type="text" id="bairro" name="bairro" class="form-control" value="<?= htmlspecialchars($cliente['bairro'] ?? '') ?>" required>
+                        <input type="text" id="bairro" name="bairro" class="form-control" value="<?= htmlspecialchars($cliente['bairro'] ?? '') ?>" required <?= $disabled ?>>
                     </div>
                     <div class="col-md-1">
                         <label for="numero" class="form-label">Nº</label>
-                        <input type="text" id="numero" name="numero" class="form-control" value="<?= htmlspecialchars($cliente['numero'] ?? '') ?>" required>
+                        <input type="text" id="numero" name="numero" class="form-control" value="<?= htmlspecialchars($cliente['numero'] ?? '') ?>" required <?= $disabled ?>>
                     </div>
                     <div class="col-md-2">
                         <label for="cidade" class="form-label">Cidade</label>
-                        <input type="text" id="cidade" name="cidade" class="form-control" value="<?= htmlspecialchars($cliente['cidade'] ?? '') ?>" required>
+                        <input type="text" id="cidade" name="cidade" class="form-control" value="<?= htmlspecialchars($cliente['cidade'] ?? '') ?>" required <?= $disabled ?>>
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="complemento" class="form-label">Complemento / Referência</label>
-                    <input type="text" id="complemento" name="complemento" class="form-control" value="<?= htmlspecialchars($cliente['complemento'] ?? '') ?>">
+                    <input type="text" id="complemento" name="complemento" class="form-control" value="<?= htmlspecialchars($cliente['complemento'] ?? '') ?>" <?= $disabled ?>>
                 </div>
 
                 <div class="mb-3">
                     <label for="preferencias" class="form-label">Preferências / Observações</label>
-                    <textarea name="preferencias" class="form-control" rows="3"><?= htmlspecialchars($cliente['preferencias'] ?? '') ?></textarea>
+                    <textarea name="preferencias" class="form-control" rows="3" <?= $disabled ?>><?= htmlspecialchars($cliente['preferencias'] ?? '') ?></textarea>
                 </div>
             </div>
 
-            <div class="action-buttons mt-4">
-                <button type="submit" class="btn btn-save-main w-100 py-3 fw-bold">
-                    <i class="bi bi-save me-2"></i> <?= !empty($cliente['id']) ? 'SALVAR ALTERAÇÕES' : 'CADASTRAR CLIENTE' ?>
-                </button>
-            </div>
+            <?php if (!$isViewMode): ?>
+                <div class="action-buttons mt-4">
+                    <button type="submit" class="btn btn-save-main w-100 py-3 fw-bold">
+                        <i class="bi bi-save me-2"></i> <?= !empty($cliente['id']) ? 'SALVAR ALTERAÇÕES' : 'CADASTRAR CLIENTE' ?>
+                    </button>
+                </div>
+            <?php endif; ?>
         </form>
     </div>
 

@@ -41,6 +41,7 @@ Usado no detalhe do ponto/círculo acima da logo. Serve como um ponto de atenç�
 - **Gestão de Estoque:** CRUD completo com upload de fotos para a nuvem.
 - **CRM de Clientes:** Cadastro detalhado com histórico de eventos, busca por CEP e visualização completa de ficha.
 - **Busca Inteligente:** Sistema híbrido de busca rápida automática (via JavaScript) e busca precisa no banco de dados (via Enter/Submit).
+- **Auto-Update:** Sincronização automática de arquivos via `atualizador.php` integrada ao repositório GitHub.
 - **PDV (Ponto de Venda):** Sistema de carrinho com baixa automática de estoque e transações seguras.
 - **Vitrine Digital:** Gerador de links de catálogo para compartilhamento via WhatsApp.
 

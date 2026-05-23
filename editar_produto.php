@@ -7,6 +7,9 @@ if (!$id) {
     exit;
 }
 
+// Verifica se o modo é apenas visualização
+$viewOnly = isset($_GET['view']) && $_GET['view'] == '1';
+
 // 1. Busca os dados atuais do produto para preencher o formulário
 $produto = obterProdutoPorId($id);
 
@@ -17,7 +20,7 @@ if (!$produto || isset($produto['error'])) {
 $mensagem = "";
 
 // NOVO: Lógica para processar a exclusão do produto
-if (isset($_GET['action']) && $_GET['action'] === 'excluir') {
+if (!$viewOnly && isset($_GET['action']) && $_GET['action'] === 'excluir') {
     $res = excluirProduto($id);
     if (isset($res['error'])) {
         $mensagem = "<div class='alert alert-danger'><strong>Erro ao excluir:</strong> " . ($res['detalhes'] ?? 'Erro na API') . "</div>";
@@ -28,7 +31,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'excluir') {
 }
 
 // 2. Processa a atualização quando o formulário é enviado
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (!$viewOnly && $_SERVER['REQUEST_METHOD'] === 'POST') {
     // 1. Processamento da Imagem (Copiado do salvar_produto.php)
     // Mantém a imagem atual como padrão caso não seja enviada uma nova
     $nomeImagem = $produto['imagem'] ?? 'placeholder.jpg';
@@ -99,7 +102,10 @@ $imgAtual = !empty($produto['imagem']) ? $produto['imagem'] : 'placeholder.jpg';
 
     <div class="container-fluid main-content">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="text-dark"><i class="bi bi-pencil-square me-2"></i>Editar Produto #<?= htmlspecialchars($id) ?></h2>
+            <h2 class="text-dark">
+                <i class="bi <?= $viewOnly ? 'bi-eye-fill' : 'bi-pencil-square' ?> me-2"></i>
+                <?= $viewOnly ? 'Visualizar Produto' : 'Editar Produto' ?> #<?= htmlspecialchars($id) ?>
+            </h2>
             <a href="produtos.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Voltar aos Produtos</a>
         </div>
         
@@ -113,13 +119,13 @@ $imgAtual = !empty($produto['imagem']) ? $produto['imagem'] : 'placeholder.jpg';
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label class="form-label">Nome do Vestido</label>
-                            <input type="text" name="nomeProduto" class="form-control" value="<?= htmlspecialchars($nomeVal) ?>" required>
+                            <input type="text" name="nomeProduto" class="form-control" value="<?= htmlspecialchars($nomeVal) ?>" required <?= $viewOnly ? 'readonly' : '' ?>>
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Categoria</label>
-                            <select class="form-select" name="categoria" required>
+                            <select class="form-select" name="categoria" required <?= $viewOnly ? 'disabled' : '' ?>>
                                 <option value="Noivas" <?= $categoriaVal == 'Noivas' ? 'selected' : '' ?>>Noivas</option>
                                 <option value="Formandas" <?= $categoriaVal == 'Formandas' ? 'selected' : '' ?>>Formandas</option>
                                 <option value="Madrinhas" <?= $categoriaVal == 'Madrinhas' ? 'selected' : '' ?>>Madrinhas</option>
@@ -128,11 +134,11 @@ $imgAtual = !empty($produto['imagem']) ? $produto['imagem'] : 'placeholder.jpg';
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Estoque</label>
-                            <input type="number" name="quantidade" class="form-control" value="<?= $estoqueVal ?>" required>
+                            <input type="number" name="quantidade" class="form-control" value="<?= $estoqueVal ?>" required <?= $viewOnly ? 'readonly' : '' ?>>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Data Aquisição</label>
-                            <input type="date" name="validade" class="form-control" value="<?= $dataVal ?>">
+                            <input type="date" name="validade" class="form-control" value="<?= $dataVal ?>" <?= $viewOnly ? 'readonly' : '' ?>>
                         </div>
                     </div>
 
@@ -140,17 +146,17 @@ $imgAtual = !empty($produto['imagem']) ? $produto['imagem'] : 'placeholder.jpg';
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Preço de Venda (R$)</label>
-                            <input type="number" step="0.01" name="precoUnitario" class="form-control form-control-lg" value="<?= $precoUVal ?>" required>
+                            <input type="number" step="0.01" name="precoUnitario" class="form-control form-control-lg" value="<?= $precoUVal ?>" required <?= $viewOnly ? 'readonly' : '' ?>>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-primary fw-bold">Valor do Aluguel (R$)</label>
-                            <input type="number" step="0.01" name="precoPacote" class="form-control form-control-lg border-primary" value="<?= $precoPVal ?>" required>
+                            <input type="number" step="0.01" name="precoPacote" class="form-control form-control-lg border-primary" value="<?= $precoPVal ?>" required <?= $viewOnly ? 'readonly' : '' ?>>
                         </div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Descrição Detalhada</label>
-                        <textarea name="descricao" class="form-control" rows="4"><?= htmlspecialchars($produto['descricao'] ?? '') ?></textarea>
+                        <textarea name="descricao" class="form-control" rows="4" <?= $viewOnly ? 'readonly' : '' ?>><?= htmlspecialchars($produto['descricao'] ?? '') ?></textarea>
                     </div>
                 </div>
 
@@ -161,6 +167,7 @@ $imgAtual = !empty($produto['imagem']) ? $produto['imagem'] : 'placeholder.jpg';
                         <?php $urlImg = "https://idxyfkeodaettqbjuiak.supabase.co/storage/v1/object/public/toa-toa-moda-festa/" . $imgAtual; ?>
                         <img src="<?= htmlspecialchars($urlImg) ?>" alt="Preview" id="previewImg" style="display: block;" onerror="this.src='toatoa.png'">
                     </div>
+                    <?php if (!$viewOnly): ?>
                     <div class="mt-3">
                         <label for="imagemProduto" class="btn btn-upload w-100">
                             <i class="bi bi-camera me-2"></i> Alterar Imagem
@@ -168,15 +175,18 @@ $imgAtual = !empty($produto['imagem']) ? $produto['imagem'] : 'placeholder.jpg';
                         <input type="file" class="form-control d-none" id="imagemProduto" name="imagemProduto" accept="image/*">
                         <p class="text-muted small mt-2 text-center">Atual: <?= htmlspecialchars($imgAtual) ?></p>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
+            <?php if (!$viewOnly): ?>
             <div class="action-buttons d-flex justify-content-between">
                 <button type="button" class="btn btn-outline-danger px-4" onclick="confirmarExclusao()">
                     <i class="bi bi-trash me-2"></i> EXCLUIR PRODUTO
                 </button>
                 <button type="submit" class="btn btn-save-main">SALVAR ALTERAÇÕES</button>
             </div>
+            <?php endif; ?>
         </form>
     </div>
 

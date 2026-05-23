@@ -140,7 +140,12 @@ $produtos = $api_error ? [] : $result;
                                     <td class="text-end price-tag">R$ <?php echo number_format((float)$venda, 2, ',', '.'); ?></td>
                                     <td class="text-end rental-tag">R$ <?php echo number_format((float)$aluguel, 2, ',', '.'); ?></td>
                                     <td class="text-end pe-3">
-                                        <a href="editar_produto.php?id=<?php echo urlencode($id); ?>" class="btn btn-sm btn-outline-secondary" title="Ver detalhes"><i class="bi bi-eye"></i></a>
+                                        <a href="editar_produto.php?id=<?= urlencode($id); ?>&view=1" class="btn btn-sm btn-outline-primary shadow-sm" title="Ver cadastro completo">
+                                            <i class="bi bi-eye-fill me-1"></i> Ver Todo Cadastro
+                                        </a>
+                                        <a href="editar_produto.php?id=<?php echo urlencode($id); ?>" class="btn btn-sm btn-outline-secondary shadow-sm ms-1" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

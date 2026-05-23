@@ -113,6 +113,11 @@ CREATE TABLE itens_venda (
     preco_unitario DECIMAL(10,2)
 );
 ```
+📂 Comandos Úteis (Git/Deploy)
+git add .
+git commit -m "Descricao da alteracao"
+git branch -m master main
+git push origin main
 
 ---
 *Tôa Tôa Moda Festa - Cuiabá/MT*

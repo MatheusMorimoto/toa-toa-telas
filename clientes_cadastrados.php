@@ -2,7 +2,7 @@
 include 'db.php';
 
 // Verifica se há um termo de busca vindo da barra de navegação
-$busca = $_GET['busca'] ?? null;
+$busca = (isset($_GET['busca']) && trim($_GET['busca']) !== '') ? trim($_GET['busca']) : null;
 
 if (!empty($busca)) {
     $clientes = pesquisarClientes($busca);
@@ -96,5 +96,30 @@ if (!empty($busca)) {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Lógica de Busca Automática (Filtro em tempo real) para Clientes
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.querySelector('input[name="busca"]');
+            if (searchInput) {
+                // Re-foca o campo se for um retorno de busca do servidor
+                if (new URLSearchParams(window.location.search).has('busca')) {
+                    searchInput.focus();
+                    const val = searchInput.value;
+                    searchInput.value = '';
+                    searchInput.value = val;
+                }
+
+                searchInput.addEventListener('input', function() {
+                    const filter = this.value.toLowerCase().trim();
+                    const rows = document.querySelectorAll('tbody tr');
+                    rows.forEach(row => {
+                        // Busca em todos os campos da linha (Nome, WhatsApp, CPF, etc)
+                        const text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(filter) ? '' : 'none';
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 </html>

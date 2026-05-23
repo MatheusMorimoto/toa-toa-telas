@@ -2,7 +2,7 @@
 include_once 'db.php';
 
 // Verifica se há um termo de busca vindo da barra de navegação
-$busca = $_GET['busca'] ?? null;
+$busca = (isset($_GET['busca']) && trim($_GET['busca']) !== '') ? trim($_GET['busca']) : null;
 
 if (!empty($busca)) {
     $result = buscarProduto($busca);
@@ -176,6 +176,27 @@ $produtos = $api_error ? [] : $result;
         const checks = document.querySelectorAll('.product-check');
         const catalogBar = document.getElementById('catalogBar');
         const countSpan = document.getElementById('selectedCount');
+
+        // Lógica de Busca Automática (Filtro em tempo real)
+        const searchInput = document.querySelector('input[name="busca"]');
+        if (searchInput) {
+            // Mantém o foco e o cursor no final do texto se houver uma busca ativa
+            if (new URLSearchParams(window.location.search).has('busca')) {
+                searchInput.focus();
+                const val = searchInput.value;
+                searchInput.value = '';
+                searchInput.value = val;
+            }
+
+            searchInput.addEventListener('input', function() {
+                const filter = this.value.toLowerCase().trim();
+                const rows = document.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(filter) ? '' : 'none';
+                });
+            });
+        }
 
         function updateBar() {
             const selected = Array.from(checks).filter(c => c.checked).length;

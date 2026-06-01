@@ -78,6 +78,9 @@ if (!empty($busca)) {
                                         </td>
                                         <td class="text-center">
                                             <!-- Botão solicitado: Ver todo o cadastro -->
+                                            <a href="venda.php?cliente_id=<?= $c['id'] ?>" class="btn btn-sm btn-success shadow-sm" title="Iniciar Venda">
+                                                <i class="bi bi-cart-plus-fill me-1"></i> Iniciar Venda
+                                            </a>
                                             <a href="cadastro_cliente.php?id=<?= $c['id'] ?>&view=1" class="btn btn-sm btn-outline-primary shadow-sm" title="Ver cadastro completo">
                                                 <i class="bi bi-eye-fill me-1"></i> Ver Todo Cadastro
                                             </a>

@@ -126,8 +126,8 @@ function uploadImagemSupabase($file_tmp_path, $file_name) {
 function api_request($method, $endpoint, $data = null) {
     global $api_base_url, $api_key;
     
-    if (strpos($endpoint, '/toa-toa-clientes') === 0) {
-        // Se for endpoint de clientes, a URL já é completa após o domínio
+    if (strpos($endpoint, '/toa-toa-clientes') === 0 || strpos($endpoint, '/toa-toa-vendas') === 0) {
+        // Endpoints de Clientes e Vendas respondem na raiz da API Node.js no Render
         $url = "https://api-toa-a-toa-2.onrender.com" . $endpoint;
     } else {
         // Lógica para produtos (mantendo o que já funcionava)
@@ -227,5 +227,10 @@ function salvarCliente($dados) {
 
 function editarCliente($id, $dados) {
     return api_request("PUT", "/toa-toa-clientes/" . $id, $dados);
+}
+
+// FUNÇÃO PARA REGISTRO DE VENDAS E ALUGUÉIS
+function registrarOperacaoCompleta($dados) {
+    return api_request("POST", "/toa-toa-vendas", $dados);
 }
 ?>

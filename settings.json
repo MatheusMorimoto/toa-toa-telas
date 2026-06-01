@@ -1,0 +1,22 @@
+{
+    "web_server": {
+        "listen_on": ["127.0.0.1", 0],
+        "www_directory": "www",
+        "index_files": ["index.php"],
+        "cgi_interpreter": "php/php-cgi.exe",
+        "cgi_extensions": ["php"],
+        "cgi_temp_dir": ""
+    },
+    "main_window": {
+        "title": "Tôa Tôa Moda Festa - Sistema de Gestão",
+        "icon": "www/toatoa.png",
+        "default_size": [1024, 768],
+        "minimum_size": [800, 600],
+        "maximum_size": [0, 0],
+        "disable_navigation": false,
+        "start_maximized": true,
+        "center_screen": true,
+        "activate_copy_paste_shortcuts": true
+    },
+    "debug": { "show_console": false }
+}

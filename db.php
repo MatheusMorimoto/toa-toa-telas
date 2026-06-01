@@ -1,4 +1,7 @@
 <?php
+// Versão atual do sistema instalado no notebook
+define('SYSTEM_VERSION', '1.0.0');
+
 // Aumenta o tempo de execução do PHP globalmente para lidar com o "cold start" do Render
 set_time_limit(0);
 ini_set('max_execution_time', 0);

@@ -4,11 +4,8 @@
  * Este arquivo é isolado e não altera a lógica do banco de dados ou das APIs.
  */
 
-// 1. Definição da Versão Local (Mude este número sempre que subir uma nova versão)
-define('SYSTEM_VERSION', '1.0.0');
+include_once 'db.php';
 
-// 2. Configurações do GitHub
-$repoOwner = "MatheusMorimoto";
 $repoName  = "toa-toa-telas";
 $branch    = "main";
 $versionUrl = "https://raw.githubusercontent.com/$repoOwner/$repoName/$branch/version.json";

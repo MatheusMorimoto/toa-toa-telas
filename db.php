@@ -3,8 +3,9 @@ require_once __DIR__ . '/security.php';
 require_auth();
 require_once __DIR__ . '/services/toa_toa_api.php';
 
-// Versão atual do sistema instalado no notebook
-define('SYSTEM_VERSION', '1.0.0');
+// Versão instalada, mantida pelo manifesto de atualização.
+$versionManifest = json_decode((string)@file_get_contents(__DIR__ . '/version.json'), true);
+define('SYSTEM_VERSION', is_string($versionManifest['version'] ?? null) ? $versionManifest['version'] : '0.0.0');
 
 // Aumenta o tempo de execução do PHP globalmente para lidar com o "cold start" do Render
 set_time_limit(0);

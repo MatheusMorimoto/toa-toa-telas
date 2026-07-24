@@ -74,7 +74,7 @@ CREATE TABLE clientes (
 
 ## ⚙️ Configuração e Instalação
 
-1. Habilite as extensões `curl` e `fileinfo` no `php.ini`.
+1. Habilite as extensões `curl`, `fileinfo` e `zip` no `php.ini`.
 2. Crie um `.env` local baseado em `.env.example`.
 3. Configure somente no backend:
    ```env
@@ -103,12 +103,50 @@ O caminho do arquivo de configuração pode ser confirmado com `php --ini`.
 - [x] **Busca Precisa:** Consulta completa à API ao pressionar Enter, mantendo o foco no campo.
 
 ## 🔄 Como Atualizar o Sistema
-O sistema possui um atualizador automático (`atualizador.php`) que sincroniza os arquivos com o GitHub.
+O sistema verifica atualizações automaticamente ao abrir uma tela e quando o app volta ao primeiro plano. A interface consulta `version.json` sem bloquear o uso e instala somente uma versão superior.
 
-1. No seu computador, edite os arquivos e mude a versão no `version.json`.
-2. Faça o `git push` para o GitHub.
-3. Acesse `seusite.com/atualizador.php` no navegador.
-4. O script baixará as novidades e redirecionará você para a tela inicial.
+### Publicar uma versão
+
+1. Finalize e teste as alterações.
+2. Gere um pacote imutável, aumentando a versão:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File tools/build-update-package.ps1 -Version 1.1.0
+   ```
+3. Revise o `version.json`. O script preenche `download_url`, `sha256`, `minimum_app_version` e `published_at`.
+4. Inclua o pacote mesmo estando ignorado por padrão:
+   ```bash
+   git add -A
+   git add -f releases/toa-toa-1.1.0.zip
+   git commit -m "Publica versão 1.1.0"
+   git push origin main
+   ```
+5. As instalações consultarão o manifesto em até 5 minutos e aplicarão a atualização. A verificação manual continua disponível em `atualizador.php`.
+
+Nunca aponte `download_url` para o ZIP dinâmico da branch: o pacote e seu SHA-256 precisam ser imutáveis.
+
+### Segurança e recuperação
+
+- Somente URLs HTTPS do GitHub são aceitas.
+- O SHA-256 é validado antes da extração.
+- Caminhos absolutos, `..` e links simbólicos são rejeitados.
+- `.env`, credenciais, bancos locais, `settings.json`, `imagens/` e dados do usuário não são substituídos.
+- Os arquivos são preparados temporariamente e trocados individualmente.
+- Antes de cada troca há um backup; uma falha restaura automaticamente a versão anterior.
+- Estado, logs e backups ficam em `storage/update/` e não são enviados ao Git.
+- Sem internet, a versão instalada continua funcionando e a verificação é repetida depois.
+
+### PWA, WebView e lojas
+
+Este mecanismo atualiza a aplicação PHP hospedada no servidor. Uma PWA ou WebView passa a exibir as novas telas após recarregar. Ele não substitui código nativo de Android ou iOS: mudanças no binário, permissões, plugins nativos ou configuração da loja exigem uma nova versão na Play Store ou App Store.
+
+### Testar o atualizador
+
+```bash
+php tests/update_service_test.php
+php tests/run.php
+```
+
+Os testes do atualizador cobrem versão nova, versão atual, indisponibilidade de rede, pacote corrompido, SHA inválido, URL não autorizada, preservação de dados e rollback.
 
 ---
 
@@ -132,10 +170,9 @@ O sistema possui um atualizador automático (`atualizador.php`) que sincroniza o
 2. `git commit -m "Atualização de funcionalidades e busca"`
 3. `git push origin main`
 
-git add .
-git commit -m "Descricao da alteracao"
-git branch -m master main
-git push origin main
+git add -A
+git commit -m "Atualiza integração e conexão com a API"
+git push -u origin main
 
 **Tôa Tôa Moda Festa**
 *Patrocinadora oficial do Miss Mato Grosso*

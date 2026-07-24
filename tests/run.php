@@ -23,6 +23,7 @@ $missingAuth = toa_api_request('GET', '/toa-toa-api-supabase');
 check(($missingAuth['status'] ?? null) === 0 && isset($missingAuth['error']), 'autenticação ausente');
 
 putenv('CHAVE_MESTRA=chave-legada-apenas-para-teste');
+putenv('TOA_TOA_API_KEY=');
 check(toa_api_key() === 'chave-legada-apenas-para-teste', 'compatibilidade com CHAVE_MESTRA');
 putenv('CHAVE_MESTRA');
 

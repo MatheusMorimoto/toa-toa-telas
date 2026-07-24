@@ -14,3 +14,7 @@
 # Ignorar arquivos do Sistema Operacional
 Thumbs.db
 .DS_Store
+
+# Estado local, logs, backups e pacotes temporários do atualizador.
+/storage/
+/releases/*.zip

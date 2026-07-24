@@ -5,6 +5,21 @@
         display: block;
         margin-top: 0;
     }
+    #update-status {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        z-index: 1080;
+        max-width: min(420px, calc(100vw - 2rem));
+        display: none;
+        padding: .8rem 1rem;
+        border-radius: .6rem;
+        color: #fff;
+        background: #001d3d;
+        border: 1px solid #ffd700;
+        box-shadow: 0 .4rem 1.4rem rgba(0, 0, 0, .3);
+        font: 500 .9rem/1.35 system-ui, sans-serif;
+    }
 </style>
 <header class="top-bar">
     <div class="brand-area">
@@ -59,6 +74,7 @@
         <?php endif; ?>
     </div>
 </header>
+<div id="update-status" role="status" aria-live="polite"></div>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('form[method="POST"]').forEach((form) => {
@@ -70,6 +86,77 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }, 0);
         });
+    });
+
+    const updateStatus = document.getElementById('update-status');
+    const csrfToken = <?= json_encode(csrf_token(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    let checkingUpdate = false;
+
+    const showUpdateStatus = (message, kind = 'info', hideAfter = 0) => {
+        if (!updateStatus) return;
+        updateStatus.textContent = message;
+        updateStatus.style.display = 'block';
+        updateStatus.style.borderColor = kind === 'error' ? '#dc3545' : '#ffd700';
+        if (hideAfter > 0) {
+            window.setTimeout(() => {
+                updateStatus.style.display = 'none';
+            }, hideAfter);
+        }
+    };
+
+    const installUpdate = async () => {
+        showUpdateStatus('Baixando e instalando atualização…');
+        const body = new URLSearchParams({ csrf_token: csrfToken });
+        const response = await fetch('update_api.php?action=install', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body,
+        });
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            throw new Error(result.message || 'Não foi possível instalar a atualização.');
+        }
+        if (result.status === 'updated') {
+            showUpdateStatus('Aplicativo atualizado. Recarregando as telas…');
+            window.setTimeout(() => window.location.reload(), 1200);
+        } else {
+            showUpdateStatus('O aplicativo já está atualizado.', 'info', 2500);
+        }
+    };
+
+    const checkForUpdates = async () => {
+        if (checkingUpdate || document.visibilityState === 'hidden') return;
+        checkingUpdate = true;
+        showUpdateStatus('Verificando atualizações…');
+        try {
+            const response = await fetch('update_api.php?action=check', {
+                credentials: 'same-origin',
+                cache: 'no-store',
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'Falha na verificação.');
+            if (result.status === 'available') {
+                await installUpdate();
+            } else if (result.status === 'offline') {
+                showUpdateStatus(result.message, 'error', 5000);
+            } else {
+                showUpdateStatus('Aplicativo atualizado.', 'info', 1800);
+            }
+        } catch (error) {
+            showUpdateStatus(
+                error instanceof Error ? error.message : 'Não foi possível verificar atualizações agora.',
+                'error',
+                5000
+            );
+        } finally {
+            checkingUpdate = false;
+        }
+    };
+
+    checkForUpdates();
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkForUpdates();
     });
 });
 </script>

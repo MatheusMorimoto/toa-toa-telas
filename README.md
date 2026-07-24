@@ -148,6 +148,33 @@ php tests/run.php
 
 Os testes do atualizador cobrem versão nova, versão atual, indisponibilidade de rede, pacote corrompido, SHA inválido, URL não autorizada, preservação de dados e rollback.
 
+## 📲 Catálogo público e WhatsApp
+
+O catálogo compartilhado não depende da sessão administrativa. Os IDs selecionados ficam na URL pública e os dados são consultados no servidor, sem expor a chave da API ao navegador.
+
+Configure no `.env` do servidor:
+
+```env
+PUBLIC_APP_URL=https://catalogo.seudominio.com
+WHATSAPP_BUSINESS_NUMBER=5565999999999
+```
+
+`PUBLIC_APP_URL` precisa ser o endereço HTTPS público desta aplicação PHP. Um endereço `localhost`, IP de rede interna ou pasta existente somente no computador da loja não pode ser aberto pelo cliente.
+
+Na tela de produtos:
+
+1. Use **Criar Catálogo** para incluir todos os produtos visíveis, ou marque apenas os desejados.
+2. Clique em **Gerar Link do Catálogo**.
+3. Use **Enviar pelo WhatsApp**, o compartilhamento nativo do celular ou copie o link.
+
+A página `catalogo.php` é pública, mas a chave da API permanece somente no servidor. Se a API ficar temporariamente indisponível, o servidor exibe o último catálogo armazenado em `storage/catalog/products.json`.
+
+Teste o fluxo com:
+
+```bash
+php tests/catalog_test.php
+```
+
 ---
 
 ## 📝 Planejamento (Roadmap)

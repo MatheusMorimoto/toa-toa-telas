@@ -1,3 +1,4 @@
+<?php start_secure_session(); ?>
 <!-- 1. Cabeçalho de Identidade (Top Bar) -->
 <style>
     /* Efeito de hover para os dropdowns aparecerem ao passar o mouse */

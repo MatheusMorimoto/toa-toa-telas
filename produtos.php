@@ -1,5 +1,6 @@
 <?php
 include_once 'db.php';
+require_once __DIR__ . '/services/catalog_service.php';
 
 // Verifica se há um termo de busca vindo da barra de navegação
 $busca = (isset($_GET['busca']) && trim($_GET['busca']) !== '') ? trim($_GET['busca']) : null;
@@ -14,6 +15,10 @@ if (!empty($busca)) {
 // Verifica se houve erro na API
 $api_error = isset($result['error']) ? $result : null;
 $produtos = $api_error ? [] : $result;
+if (!$api_error && is_array($produtos)) {
+    catalog_write_cache($produtos);
+}
+$catalogBaseUrl = catalog_public_base_url();
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -66,9 +71,9 @@ $produtos = $api_error ? [] : $result;
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="section-title mb-0"><i class="bi bi-box-seam me-2"></i>Produtos em Estoque</h4>
-            <a href="catalogo.php" class="btn btn-warning-custom btn-sm shadow-sm">
+            <button type="button" class="btn btn-warning-custom btn-sm shadow-sm" onclick="criarCatalogoCompleto()">
                 <i class="bi bi-journal-richtext me-1"></i> Criar Catálogo
-            </a>
+            </button>
         </div>
 
         <!-- Barra de Ações para Gerar Catálogo -->
@@ -169,6 +174,15 @@ $produtos = $api_error ? [] : $result;
                         <button class="btn btn-primary" onclick="copiarLink()"><i class="bi bi-clipboard"></i></button>
                     </div>
                     <div class="alert alert-info small">Este link abrirá uma vitrine apenas com os vestidos selecionados.</div>
+                    <div id="catalogLinkError" class="alert alert-danger small d-none"></div>
+                    <div class="d-grid gap-2">
+                        <button type="button" id="whatsappShareButton" class="btn btn-success" onclick="enviarWhatsApp()">
+                            <i class="bi bi-whatsapp me-2"></i>Enviar pelo WhatsApp
+                        </button>
+                        <button type="button" id="nativeShareButton" class="btn btn-outline-secondary" onclick="compartilharCatalogo()">
+                            <i class="bi bi-share me-2"></i>Compartilhar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -179,6 +193,7 @@ $produtos = $api_error ? [] : $result;
         const checks = document.querySelectorAll('.product-check');
         const catalogBar = document.getElementById('catalogBar');
         const countSpan = document.getElementById('selectedCount');
+        const catalogBaseUrl = <?= json_encode($catalogBaseUrl, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
         // Lógica de Busca Automática (Filtro em tempo real)
         const searchInput = document.querySelector('input[name="busca"]');
@@ -208,23 +223,96 @@ $produtos = $api_error ? [] : $result;
         }
 
         checks.forEach(c => c.addEventListener('change', updateBar));
-        document.getElementById('selectAll').addEventListener('change', function() {
-            checks.forEach(c => c.checked = this.checked);
+        const selectAll = document.getElementById('selectAll');
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                checks.forEach(c => c.checked = this.checked);
+                updateBar();
+            });
+        }
+
+        function selectedIds() {
+            return Array.from(checks)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.value)
+                .filter(Boolean);
+        }
+
+        function criarCatalogoCompleto() {
+            const visibleChecks = Array.from(checks).filter(checkbox => checkbox.closest('tr')?.style.display !== 'none');
+            if (visibleChecks.length === 0) {
+                alert('Não há produtos disponíveis para criar o catálogo.');
+                return;
+            }
+            visibleChecks.forEach(checkbox => checkbox.checked = true);
             updateBar();
-        });
+            gerarLink();
+        }
 
         function gerarLink() {
-            const ids = Array.from(checks).filter(c => c.checked).map(c => c.value).join(',');
-            const url = window.location.origin + window.location.pathname.replace('produtos.php', 'catalogo.php') + '?ids=' + ids;
-            document.getElementById('generatedLink').value = url;
+            const ids = selectedIds();
+            if (ids.length === 0) {
+                alert('Selecione pelo menos um produto.');
+                return;
+            }
+            const errorElement = document.getElementById('catalogLinkError');
+            const input = document.getElementById('generatedLink');
+            if (!catalogBaseUrl) {
+                input.value = '';
+                errorElement.textContent = 'Configure PUBLIC_APP_URL com o endereço HTTPS público do sistema. Links locais não abrem no celular do cliente.';
+                errorElement.classList.remove('d-none');
+                document.getElementById('whatsappShareButton').disabled = true;
+                document.getElementById('nativeShareButton').disabled = true;
+            } else {
+                const url = new URL('catalogo.php', catalogBaseUrl.replace(/\/?$/, '/'));
+                url.searchParams.set('ids', ids.join(','));
+                input.value = url.toString();
+                errorElement.classList.add('d-none');
+                document.getElementById('whatsappShareButton').disabled = false;
+                document.getElementById('nativeShareButton').disabled = false;
+            }
             new bootstrap.Modal(document.getElementById('linkModal')).show();
         }
 
-        function copiarLink() {
+        async function copiarLink() {
             const input = document.getElementById('generatedLink');
-            input.select();
-            document.execCommand('copy');
+            if (!input.value) return;
+            try {
+                await navigator.clipboard.writeText(input.value);
+            } catch {
+                input.select();
+                document.execCommand('copy');
+            }
             alert('Link copiado com sucesso!');
+        }
+
+        function catalogShareText() {
+            return 'Olá! Confira os vestidos que selecionei para você na Tôa Tôa Moda Festa:\n\n' +
+                document.getElementById('generatedLink').value;
+        }
+
+        function enviarWhatsApp() {
+            const link = document.getElementById('generatedLink').value;
+            if (!link) return;
+            window.open('https://wa.me/?text=' + encodeURIComponent(catalogShareText()), '_blank', 'noopener,noreferrer');
+        }
+
+        async function compartilharCatalogo() {
+            const link = document.getElementById('generatedLink').value;
+            if (!link) return;
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Catálogo Tôa Tôa Moda Festa',
+                        text: 'Confira os vestidos selecionados para você.',
+                        url: link
+                    });
+                    return;
+                } catch (error) {
+                    if (error?.name === 'AbortError') return;
+                }
+            }
+            await copiarLink();
         }
     </script>
 </body>

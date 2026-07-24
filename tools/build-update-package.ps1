@@ -59,7 +59,30 @@ try {
     if (Test-Path -LiteralPath $packagePath) {
         Remove-Item -LiteralPath $packagePath
     }
-    Compress-Archive -Path (Join-Path $stagingRoot '*') -DestinationPath $packagePath -CompressionLevel Optimal
+    Add-Type -AssemblyName System.IO.Compression
+    $packageStream = [IO.File]::Open($packagePath, [IO.FileMode]::CreateNew)
+    $archive = New-Object IO.Compression.ZipArchive(
+        $packageStream,
+        [IO.Compression.ZipArchiveMode]::Create,
+        $false
+    )
+    try {
+        foreach ($file in Get-ChildItem -LiteralPath $stagingRoot -File -Recurse) {
+            $entryName = $file.FullName.Substring($stagingRoot.Length + 1).Replace('\', '/')
+            $entry = $archive.CreateEntry($entryName, [IO.Compression.CompressionLevel]::Optimal)
+            $entryStream = $entry.Open()
+            $sourceStream = [IO.File]::OpenRead($file.FullName)
+            try {
+                $sourceStream.CopyTo($entryStream)
+            } finally {
+                $sourceStream.Dispose()
+                $entryStream.Dispose()
+            }
+        }
+    } finally {
+        $archive.Dispose()
+        $packageStream.Dispose()
+    }
     $sha256 = (Get-FileHash -LiteralPath $packagePath -Algorithm SHA256).Hash.ToLowerInvariant()
     $publishedAt = [DateTimeOffset]::UtcNow.ToString('o')
     $downloadUrl = "https://github.com/MatheusMorimoto/toa-toa-telas/raw/refs/heads/main/releases/$packageName"

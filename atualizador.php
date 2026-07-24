@@ -6,7 +6,7 @@
 
 include_once 'db.php';
 
-$repoOwner = env_value('UPDATER_REPO_OWNER', '');
+$repoOwner = env_value('UPDATER_REPO_OWNER', 'MatheusMorimoto');
 $repoName = env_value('UPDATER_REPO_NAME', 'toa-toa-telas');
 $branch = env_value('UPDATER_BRANCH', 'main');
 

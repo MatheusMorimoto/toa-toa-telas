@@ -14,13 +14,17 @@ $viewOnly = isset($_GET['view']) && $_GET['view'] == '1';
 $produto = obterProdutoPorId($id);
 
 if (!$produto || isset($produto['error'])) {
-    die("<div class='alert alert-danger'>Erro ao carregar produto: " . $produto['detalhes'] . "</div>");
+    $detalhes = is_array($produto) ? ($produto['detalhes'] ?? 'Produto não encontrado.') : 'Produto não encontrado.';
+    die("<div class='alert alert-danger'>Erro ao carregar produto: " .
+        htmlspecialchars((string)$detalhes, ENT_QUOTES, 'UTF-8') .
+        "</div>");
 }
 
 $mensagem = "";
 
 // NOVO: Lógica para processar a exclusão do produto
-if (!$viewOnly && isset($_GET['action']) && $_GET['action'] === 'excluir') {
+if (!$viewOnly && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'excluir') {
+    validate_csrf();
     $res = excluirProduto($id);
     if (isset($res['error'])) {
         $mensagem = "<div class='alert alert-danger'><strong>Erro ao excluir:</strong> " . ($res['detalhes'] ?? 'Erro na API') . "</div>";
@@ -31,46 +35,33 @@ if (!$viewOnly && isset($_GET['action']) && $_GET['action'] === 'excluir') {
 }
 
 // 2. Processa a atualização quando o formulário é enviado
-if (!$viewOnly && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    // 1. Processamento da Imagem (Copiado do salvar_produto.php)
-    // Mantém a imagem atual como padrão caso não seja enviada uma nova
-    $nomeImagem = $produto['imagem'] ?? 'placeholder.jpg';
-
-    if (isset($_FILES['imagemProduto']) && $_FILES['imagemProduto']['error'] === 0) {
-        $extensao = strtolower(pathinfo($_FILES['imagemProduto']['name'], PATHINFO_EXTENSION));
-        $permitidos = ['jpg', 'jpeg', 'png', 'webp'];
-        
-        if (!in_array($extensao, $permitidos)) {
-            echo "<div class='alert alert-danger text-center'><strong>Erro:</strong> Apenas imagens (JPG, PNG, WEBP) são permitidas.</div>";
-            exit;
-        }
-
-        $nomeImagem = "produtos/" . time() . "_vestido." . $extensao;
-        
-        // Envia direto para o Supabase Bucket
-        if (!uploadImagemSupabase($_FILES['imagemProduto']['tmp_name'], $nomeImagem)) {
-            echo "<div class='alert alert-danger'>Erro ao enviar nova imagem para o Supabase.</div>"; exit;
-        }
+if (!$viewOnly && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'excluir') {
+    validate_csrf();
+    $upload = toa_validate_product_upload($_FILES['imagemProduto'] ?? null);
+    if (isset($upload['error'])) {
+        http_response_code(422);
+        exit(htmlspecialchars($upload['error'], ENT_QUOTES, 'UTF-8'));
     }
+    $dadosProduto = toa_product_form_data($_POST, $upload['file']);
 
-    // 2. Mapeia os dados seguindo EXATAMENTE o exemplo do salvar_produto.php
-    $dadosProduto = [
-        "nomeProduto"   => $_POST['nomeProduto'] ?? '',
-        "categoria"     => $_POST['categoria'] ?? '',
-        "validade"      => (!empty($_POST['validade'])) ? $_POST['validade'] : null,
-        "quantidade"    => isset($_POST['quantidade']) ? (int)$_POST['quantidade'] : 0,
-        "precoUnitario" => isset($_POST['precoUnitario']) ? (float)$_POST['precoUnitario'] : 0.0,
-        "precoPacote"   => isset($_POST['precoPacote']) ? (float)$_POST['precoPacote'] : 0.0,
-        "descricao"     => $_POST['descricao'] ?? '',
-        "imagem"        => $nomeImagem
-    ];
+    if ($dadosProduto['nomeProduto'] === '' ||
+        $dadosProduto['quantidade'] < 0 ||
+        $dadosProduto['precoUnitario'] < 0 ||
+        $dadosProduto['precoPacote'] < 0) {
+        http_response_code(422);
+        exit('Dados do produto inválidos.');
+    }
 
     // 3. Envia para a API (Usando PUT conforme configurado no db.php corrigido)
     $res = editarProduto($id, $dadosProduto);
 
     if (isset($res['error'])) {
         // Tratamento de erro idêntico ao salvar_produto.php
-        echo "<div class='alert alert-danger'><strong>Erro ao salvar:</strong> " . $res['error'] . "<br><strong>Detalhe Técnico:</strong> " . ($res['detalhes'] ?? 'Verifique o servidor') . "</div>";
+        echo "<div class='alert alert-danger'><strong>Erro ao salvar:</strong> " .
+            htmlspecialchars((string)$res['error'], ENT_QUOTES, 'UTF-8') .
+            "<br><strong>Detalhe Técnico:</strong> " .
+            htmlspecialchars((string)($res['detalhes'] ?? 'Verifique o servidor'), ENT_QUOTES, 'UTF-8') .
+            "</div>";
     } else {
         // Sucesso: Redireciona para Produtos Cadastrados
         header("Location: produtos.php?editado=1");
@@ -80,12 +71,13 @@ if (!$viewOnly && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Mapeamento de nomes para facilitar o HTML (API pode retornar nome ou nomeProduto)
 $nomeVal = $produto['nomeProduto'] ?? $produto['nome'] ?? '';
+$codVal = $produto['codProduto'] ?? $produto['cod'] ?? '';
 $precoUVal = $produto['precoUnitario'] ?? $produto['preco_unitario'] ?? 0.00;
 $precoPVal = $produto['precoPacote'] ?? $produto['preco_pacote'] ?? 0.00;
 $categoriaVal = $produto['categoria'] ?? '';
 $estoqueVal = $produto['quantidade'] ?? 0;
 $dataVal = isset($produto['validade']) ? date('Y-m-d', strtotime($produto['validade'])) : date('Y-m-d');
-$imgAtual = !empty($produto['imagem']) ? $produto['imagem'] : 'placeholder.jpg';
+$imgAtual = toa_product_image($produto['imagem'] ?? null);
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -112,12 +104,17 @@ $imgAtual = !empty($produto['imagem']) ? $produto['imagem'] : 'placeholder.jpg';
         <?= $mensagem ?>
 
         <form method="POST" enctype="multipart/form-data">
+            <?= csrf_input() ?>
             <div class="row g-0 form-card shadow-sm">
                 <!-- Seção de Dados -->
                 <div class="col-lg-8 p-4 border-end">
                     <h5 class="section-title">Informações Gerais</h5>
                     <div class="row mb-3">
-                        <div class="col-md-12">
+                        <div class="col-md-3">
+                            <label class="form-label">Código</label>
+                            <input type="text" name="codProduto" class="form-control" value="<?= htmlspecialchars($codVal, ENT_QUOTES, 'UTF-8') ?>" <?= $viewOnly ? 'readonly' : '' ?>>
+                        </div>
+                        <div class="col-md-9">
                             <label class="form-label">Nome do Vestido</label>
                             <input type="text" name="nomeProduto" class="form-control" value="<?= htmlspecialchars($nomeVal) ?>" required <?= $viewOnly ? 'readonly' : '' ?>>
                         </div>
@@ -164,8 +161,7 @@ $imgAtual = !empty($produto['imagem']) ? $produto['imagem'] : 'placeholder.jpg';
                 <div class="col-lg-4 image-panel">
                     <h5 class="section-title">Foto do Produto</h5>
                     <div class="image-preview" id="imagePreviewContainer">
-                        <?php $urlImg = "https://idxyfkeodaettqbjuiak.supabase.co/storage/v1/object/public/toa-toa-moda-festa/" . $imgAtual; ?>
-                        <img src="<?= htmlspecialchars($urlImg) ?>" alt="Preview" id="previewImg" style="display: block;" onerror="this.src='toatoa.png'">
+                        <img src="<?= htmlspecialchars($imgAtual, ENT_QUOTES, 'UTF-8') ?>" alt="Foto do produto" id="previewImg" style="display: block;" onerror="this.onerror=null;this.src='toatoa.png'">
                     </div>
                     <?php if (!$viewOnly): ?>
                     <div class="mt-3">
@@ -192,7 +188,8 @@ $imgAtual = !empty($produto['imagem']) ? $produto['imagem'] : 'placeholder.jpg';
 
     <script>
         // Preview da nova imagem selecionada
-        document.getElementById('imagemProduto').addEventListener('change', function() {
+        const imagemProduto = document.getElementById('imagemProduto');
+        if (imagemProduto) imagemProduto.addEventListener('change', function() {
             const file = this.files[0];
             if (file) {
                 const reader = new FileReader();
@@ -206,7 +203,13 @@ $imgAtual = !empty($produto['imagem']) ? $produto['imagem'] : 'placeholder.jpg';
         // Função para confirmar a exclusão
         function confirmarExclusao() {
             if (confirm("Tem certeza que deseja excluir permanentemente este produto? Esta ação não pode ser desfeita.")) {
-                window.location.href = "editar_produto.php?id=<?= $id ?>&action=excluir";
+                const form = document.querySelector('form[method="POST"]');
+                const action = document.createElement('input');
+                action.type = 'hidden';
+                action.name = 'action';
+                action.value = 'excluir';
+                form.appendChild(action);
+                form.submit();
             }
         }
     </script>

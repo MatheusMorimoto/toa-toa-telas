@@ -6,8 +6,34 @@
 
 include_once 'db.php';
 
-$repoName  = "toa-toa-telas";
-$branch    = "main";
+$repoOwner = env_value('UPDATER_REPO_OWNER', '');
+$repoName = env_value('UPDATER_REPO_NAME', 'toa-toa-telas');
+$branch = env_value('UPDATER_BRANCH', 'main');
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    ?>
+    <!DOCTYPE html>
+    <html lang="pt-br">
+    <head><meta charset="UTF-8"><title>Tôa Tôa - Atualizador</title></head>
+    <body>
+        <form method="POST">
+            <?= csrf_input() ?>
+            <button type="submit">Verificar atualizações</button>
+        </form>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
+validate_csrf();
+if (!preg_match('/\A[A-Za-z0-9_.-]+\z/', $repoOwner) ||
+    !preg_match('/\A[A-Za-z0-9_.-]+\z/', $repoName) ||
+    !preg_match('/\A[A-Za-z0-9_.\/-]+\z/', $branch)) {
+    http_response_code(503);
+    exit('Atualizador não configurado. Defina o repositório oficial nas variáveis de ambiente.');
+}
+
 $versionUrl = "https://raw.githubusercontent.com/$repoOwner/$repoName/$branch/version.json";
 
 function logUpdate($message) {
@@ -22,7 +48,8 @@ try {
     curl_setopt($ch, CURLOPT_URL, $versionUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($ch, CURLOPT_TIMEOUT, 15);
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -33,8 +60,13 @@ try {
     }
 
     $remoteData = json_decode($response, true);
-    if (!$remoteData || !isset($remoteData['version'])) {
+    if (!$remoteData || !isset($remoteData['version'], $remoteData['download_url'])) {
         throw new Exception("Arquivo version.json inválido no repositório.");
+    }
+
+    $downloadParts = parse_url($remoteData['download_url']);
+    if (($downloadParts['scheme'] ?? '') !== 'https' || ($downloadParts['host'] ?? '') !== 'github.com') {
+        throw new Exception("URL de download não autorizada.");
     }
 
     // 4. Compara versões
@@ -50,14 +82,24 @@ try {
         $ch = curl_init($remoteData['download_url']);
         curl_setopt($ch, CURLOPT_FILE, $fp);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_exec($ch);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        if (!curl_exec($ch) || curl_getinfo($ch, CURLINFO_HTTP_CODE) !== 200) {
+            throw new Exception("Falha ao baixar o pacote de atualização.");
+        }
         curl_close($ch);
         fclose($fp);
 
         // 6. Extração dos arquivos
         $zip = new ZipArchive;
         if ($zip->open($zipFile) === TRUE) {
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $entry = str_replace('\\', '/', $zip->getNameIndex($i));
+                if ($entry === '' || str_starts_with($entry, '/') || preg_match('#(^|/)\.\.(/|$)#', $entry)) {
+                    $zip->close();
+                    throw new Exception("O pacote contém um caminho de arquivo inválido.");
+                }
+            }
             if (!is_dir($tempDir)) mkdir($tempDir, 0777, true);
             $zip->extractTo($tempDir);
             $zip->close();
@@ -80,6 +122,10 @@ try {
                 if ($item->isDir()) {
                     if (!is_dir($target)) mkdir($target, 0777, true);
                 } else {
+                    $relative = str_replace('\\', '/', $iterator->getSubPathName());
+                    if (in_array($relative, ['.env', 'settings.json'], true)) {
+                        continue;
+                    }
                     copy($item->getPathname(), $target);
                 }
             }

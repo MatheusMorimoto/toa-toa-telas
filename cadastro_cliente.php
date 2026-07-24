@@ -24,23 +24,49 @@ $cliente = [
     'data_evento' => ''
 ];
 
+if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST['action'] ?? '') === 'excluir') {
+    validate_csrf();
+    $idExcluir = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
+    if (!$idExcluir) {
+        http_response_code(422);
+        exit('Cliente inválido.');
+    }
+    $res = excluirCliente($idExcluir);
+    if (!isset($res['error'])) {
+        header('Location: clientes_cadastrados.php?excluido=1');
+        exit;
+    }
+    $erroCliente = $res['detalhes'] ?? 'Não foi possível excluir o cliente.';
+}
+
 // Alterado para POST por segurança
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["nome_completo"]) && !$isViewMode) {
-    $id = isset($_POST["id"]) ? $_POST["id"] : '';
-    $nome_completo = $_POST["nome_completo"];
-    $cpf = $_POST["cpf"]; 
-    $rg = $_POST["rg"];
-    $whatsapp = $_POST["whatsapp"];
-    $tipo_contato_1 = $_POST["tipo_contato_1"];
-    $telefone_secundario = $_POST["telefone_secundario"];
-    $tipo_contato_2 = $_POST["tipo_contato_2"];
-    $email = $_POST["email"];
-    $cep = $_POST["cep"];
-    $preferencias = $_POST["preferencias"];
-    $data_evento = $_POST["data_evento"];
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["nome_completo"]) && !$isViewMode && ($_POST['action'] ?? '') !== 'excluir') {
+    validate_csrf();
+    $id = filter_var($_POST["id"] ?? null, FILTER_VALIDATE_INT) ?: '';
+    $nome_completo = trim((string)($_POST["nome_completo"] ?? ''));
+    $cpf = trim((string)($_POST["cpf"] ?? ''));
+    $rg = trim((string)($_POST["rg"] ?? ''));
+    $whatsapp = trim((string)($_POST["whatsapp"] ?? ''));
+    $tipo_contato_1 = trim((string)($_POST["tipo_contato_1"] ?? ''));
+    $telefone_secundario = trim((string)($_POST["telefone_secundario"] ?? ''));
+    $tipo_contato_2 = trim((string)($_POST["tipo_contato_2"] ?? ''));
+    $email = trim((string)($_POST["email"] ?? ''));
+    $cep = trim((string)($_POST["cep"] ?? ''));
+    $preferencias = trim((string)($_POST["preferencias"] ?? ''));
+    $data_evento = trim((string)($_POST["data_evento"] ?? ''));
+    if ($nome_completo === '' || $cpf === '' || $whatsapp === '' ||
+        ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL))) {
+        http_response_code(422);
+        exit('Dados do cliente inválidos.');
+    }
     
     // Monta o endereço completo para o campo 'endereco' do banco
-    $endereco_completo = $_POST["rua"] . ", " . $_POST["numero"] . " - " . $_POST["bairro"] . ", " . $_POST["cidade"] . " (" . $_POST["complemento"] . ")";
+    $endereco_completo =
+        trim((string)($_POST["rua"] ?? '')) . ", " .
+        trim((string)($_POST["numero"] ?? '')) . " - " .
+        trim((string)($_POST["bairro"] ?? '')) . ", " .
+        trim((string)($_POST["cidade"] ?? '')) . " (" .
+        trim((string)($_POST["complemento"] ?? '')) . ")";
 
     $dadosCliente = [
         "nome_completo" => $nome_completo,
@@ -98,6 +124,9 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET["id"]) && !empty($_GET["i
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
+        <?php if (!empty($erroCliente)): ?>
+            <div class="alert alert-danger"><?= htmlspecialchars($erroCliente, ENT_QUOTES, 'UTF-8') ?></div>
+        <?php endif; ?>
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="text-dark"><i class="bi bi-person-plus me-2"></i> 
@@ -107,6 +136,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET["id"]) && !empty($_GET["i
         </div>
 
         <form id="cadastro" method="POST">
+            <?= csrf_input() ?>
             <div class="form-card shadow-sm p-4">
                 <input type="hidden" name="id" value="<?= htmlspecialchars($cliente['id'] ?? '') ?>">
                 <?php $disabled = $isViewMode ? 'disabled' : ''; ?>
@@ -191,8 +221,14 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET["id"]) && !empty($_GET["i
             </div>
 
             <?php if (!$isViewMode): ?>
-                <div class="action-buttons mt-4">
-                    <button type="submit" class="btn btn-save-main w-100 py-3 fw-bold">
+                <div class="action-buttons mt-4 d-flex gap-2">
+                    <?php if (!empty($cliente['id'])): ?>
+                        <button type="submit" name="action" value="excluir" class="btn btn-outline-danger"
+                                onclick="return confirm('Tem certeza que deseja excluir este cliente?')">
+                            <i class="bi bi-trash me-2"></i> EXCLUIR CLIENTE
+                        </button>
+                    <?php endif; ?>
+                    <button type="submit" class="btn btn-save-main flex-grow-1 py-3 fw-bold">
                         <i class="bi bi-save me-2"></i> <?= !empty($cliente['id']) ? 'SALVAR ALTERAÇÕES' : 'CADASTRAR CLIENTE' ?>
                     </button>
                 </div>

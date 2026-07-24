@@ -25,12 +25,17 @@ include_once 'db.php';
         <?php endif; ?>
 
         <form action="salvar_produto.php" method="POST" enctype="multipart/form-data">
+            <?= csrf_input() ?>
             <div class="row g-0 form-card shadow-sm">
                 <!-- 2. Seção de Entrada de Dados (Formulário) -->
                 <div class="col-lg-8 p-4 border-end">
                     <h5 class="section-title">Dados Principais</h5>
                     <div class="row mb-3">
-                        <div class="col-md-12">
+                        <div class="col-md-3">
+                            <label for="codProduto" class="form-label">Código</label>
+                            <input type="text" class="form-control" id="codProduto" name="codProduto">
+                        </div>
+                        <div class="col-md-9">
                             <label for="nomeProduto" class="form-label">Nome do Vestido</label>
                             <input type="text" class="form-control" id="nomeProduto" name="nomeProduto" placeholder="Ex: Vestido Sereia Bordado" required>
                         </div>

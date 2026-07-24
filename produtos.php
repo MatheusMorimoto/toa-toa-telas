@@ -123,12 +123,10 @@ $produtos = $api_error ? [] : $result;
                                             $imgNome  = $p['imagem']        ?? '';
                                             $dataAq   = $p['validade']      ?? '';
 
-                                            $caminhoImg = (!empty($imgNome)) 
-                                                          ? "https://idxyfkeodaettqbjuiak.supabase.co/storage/v1/object/public/toa-toa-moda-festa/" . $imgNome 
-                                                          : 'toatoa.png';
+                                            $caminhoImg = toa_product_image($imgNome);
                                         ?>
                                         <img src="<?php echo htmlspecialchars($caminhoImg); ?>" 
-                                             class="img-thumb" alt="Foto" onerror="this.src='https://via.placeholder.com/60x60?text=Vestido'">
+                                             class="img-thumb" alt="Foto do produto <?= htmlspecialchars($nome, ENT_QUOTES, 'UTF-8') ?>" onerror="this.onerror=null;this.src='toatoa.png'">
                                     </td>
                                     <td><span class="cod-badge">#<?php echo htmlspecialchars($id); ?></span></td>
                                     <td class="fw-bold text-dark" style="font-size: 0.95rem;"><?php echo htmlspecialchars($nome); ?></td>

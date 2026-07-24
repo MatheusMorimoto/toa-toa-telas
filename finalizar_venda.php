@@ -1,82 +1,99 @@
 <?php
-session_start();
 include 'db.php';
+start_secure_session();
 
-if (empty($_SESSION['carrinho'])) {
-    header("Location: pdv.php");
-    exit();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    header('Allow: POST');
+    exit('Metodo nao permitido.');
 }
 
-// 2. Iniciar Transação
-$conn->begin_transaction();
+validate_csrf();
+
+$clienteId = filter_var($_POST['cliente_id'] ?? null, FILTER_VALIDATE_INT);
+$clienteSessao = $_SESSION['venda_cliente_id'] ?? null;
+if (!$clienteId || (string)$clienteId !== (string)$clienteSessao || empty($_SESSION['venda_atual'])) {
+    http_response_code(422);
+    exit('Venda ou cliente invalido. Retorne ao cadastro do cliente e tente novamente.');
+}
+
+$formasPagamento = ['dinheiro', 'pix', 'cartao_credito', 'cartao_debito'];
+$formaPagamento = $_POST['forma_pagamento'] ?? '';
+$valorCostura = filter_var($_POST['valor_costura'] ?? 0, FILTER_VALIDATE_FLOAT);
+$desconto = filter_var($_POST['desconto_valor'] ?? 0, FILTER_VALIDATE_FLOAT);
+
+if (!in_array($formaPagamento, $formasPagamento, true) ||
+    $valorCostura === false || $valorCostura < 0 ||
+    $desconto === false || $desconto < 0) {
+    http_response_code(422);
+    exit('Dados financeiros invalidos.');
+}
 
 try {
-    // 1. Calcular o total geral e validar se todos os produtos existem
-    $totalGeral = 0;
-    $stmtCalc = $conn->prepare("SELECT preco_unitario FROM produtos WHERE id = ?");
-    foreach ($_SESSION['carrinho'] as $id => $quantidade) {
-        // Pula se o ID for vazio ou inválido
-        if (empty($id)) {
-            unset($_SESSION['carrinho'][$id]);
-            continue;
+    $dadosVenda = [
+        'cliente_id' => $clienteId,
+        'forma_pagamento' => $formaPagamento,
+        'valor_costura' => (float)$valorCostura,
+        'desconto_valor' => (float)$desconto,
+        'observacoes' => trim((string)($_POST['observacoes'] ?? '')),
+        'itens' => [],
+    ];
+
+    $subtotal = 0.0;
+    foreach ($_SESSION['venda_atual'] as $item) {
+        $produtoId = filter_var($item['id'] ?? null, FILTER_VALIDATE_INT);
+        $tipo = $item['tipo'] ?? '';
+        if (!$produtoId || !in_array($tipo, ['venda', 'aluguel'], true)) {
+            throw new RuntimeException('Existe um item invalido na operacao.');
         }
 
-        $stmtCalc->bind_param("i", $id);
-        $stmtCalc->execute();
-        $res = $stmtCalc->get_result()->fetch_assoc();
-        if (!$res) {
-            throw new Exception("Produto ID $id não encontrado no sistema.");
-        }
-        $totalGeral += $res['preco_unitario'] * $quantidade;
-    }
-    $stmtCalc->close();
-
-    // 3. Inserir a venda principal
-    $stmtVenda = $conn->prepare("INSERT INTO vendas (total) VALUES (?)");
-    $stmtVenda->bind_param("d", $totalGeral);
-    $stmtVenda->execute();
-    $venda_id = $conn->insert_id;
-    $stmtVenda->close();
-
-    // 4. Preparar statements para os itens e estoque (fora do loop por performance)
-    $stmtPreco = $conn->prepare("SELECT preco_unitario FROM produtos WHERE id = ?");
-    $stmtItem = $conn->prepare("INSERT INTO itens_venda (venda_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)");
-    $stmtEstoque = $conn->prepare("UPDATE produtos SET quantidade = quantidade - ? WHERE id = ?");
-
-    foreach ($_SESSION['carrinho'] as $id => $quantidade) {
-        // Pula se o ID for vazio (segunda verificação por segurança)
-        if (empty($id)) {
-            continue;
+        $produto = obterProdutoPorId($produtoId);
+        if (!$produto || isset($produto['error'])) {
+            throw new RuntimeException("Nao foi possivel validar o produto #$produtoId.");
         }
 
-        // 4.1 Buscar preço atual para registro histórico (evita problemas se o preço mudar no futuro)
-        $stmtPreco->bind_param("i", $id);
-        $stmtPreco->execute();
-        $p = $stmtPreco->get_result()->fetch_assoc();
-        
-        if (!$p) {
-            throw new Exception("Erro de integridade: Produto ID $id sumiu durante o processo.");
+        $quantidade = (int)($produto['quantidade'] ?? 0);
+        if ($tipo === 'venda' && $quantidade < 1) {
+            throw new RuntimeException("O produto #$produtoId nao possui estoque disponivel.");
         }
 
-        $preco_historico = $p['preco_unitario'];
+        $preco = $tipo === 'venda'
+            ? ($produto['precoUnitario'] ?? $produto['preco_unitario'] ?? null)
+            : ($produto['precoPacote'] ?? $produto['preco_pacote'] ?? null);
+        if (!is_numeric($preco) || (float)$preco < 0) {
+            throw new RuntimeException("O produto #$produtoId possui preco invalido.");
+        }
 
-        // 4.2 Gravar item da venda
-        $stmtItem->bind_param("iiid", $venda_id, $id, $quantidade, $preco_historico);
-        $stmtItem->execute();
-
-        // 4.3 Baixar estoque
-        $stmtEstoque->bind_param("ii", $quantidade, $id);
-        $stmtEstoque->execute();
+        $preco = (float)$preco;
+        $subtotal += $preco;
+        $dadosVenda['itens'][] = [
+            'produto_id' => $produtoId,
+            'tipo' => $tipo,
+            'preco' => $preco,
+        ];
     }
 
-    $stmtPreco->close();
-    $stmtItem->close();
-    $stmtEstoque->close();
+    if ($desconto > $subtotal + $valorCostura) {
+        throw new RuntimeException('O desconto nao pode ser maior que o total da operacao.');
+    }
 
-    $conn->commit();
-    unset($_SESSION['carrinho']); // Limpa o carrinho
-    header("Location: pdv.php?venda_sucesso=1");
-} catch (Exception $e) {
-    $conn->rollback();
-    echo "Erro ao finalizar venda: " . $e->getMessage();
+    $res = registrarOperacaoCompleta($dadosVenda);
+    if (isset($res['error'])) {
+        throw new RuntimeException((string)($res['detalhes'] ?? $res['error']));
+    }
+
+    $vendaId = filter_var($res['venda_id'] ?? $res['id'] ?? null, FILTER_VALIDATE_INT);
+    unset($_SESSION['venda_atual'], $_SESSION['venda_cliente_id']);
+    $redirect = 'clientes_cadastrados.php?venda_sucesso=1';
+    if ($vendaId) {
+        $redirect .= '&venda_id=' . rawurlencode((string)$vendaId);
+    }
+    header('Location: ' . $redirect);
+    exit;
+} catch (Throwable $e) {
+    error_log('Erro ao finalizar venda: ' . $e->getMessage());
+    http_response_code(422);
+    echo "<div style='color:red; padding:20px;'>Erro ao finalizar venda: " .
+        htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') .
+        '</div>';
 }

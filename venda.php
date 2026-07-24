@@ -1,6 +1,6 @@
 <?php
-session_start();
 include "db.php";
+start_secure_session();
 
 // 1. Validação do Cliente
 $cliente_id = $_GET['cliente_id'] ?? null;
@@ -15,14 +15,20 @@ if (!$cliente || isset($cliente['error'])) {
 }
 
 // 2. Lógica do Carrinho (em memória/sessão)
-if (!isset($_SESSION['venda_atual'])) {
+if (!isset($_SESSION['venda_cliente_id']) || (string)$_SESSION['venda_cliente_id'] !== (string)$cliente_id) {
     $_SESSION['venda_atual'] = [];
+    $_SESSION['venda_cliente_id'] = (string)$cliente_id;
 }
 
 // Ação: Adicionar Item
 if (isset($_POST['add_item'])) {
-    $prod_id = $_POST['produto_id'];
-    $tipo = $_POST['tipo']; // 'venda' ou 'aluguel'
+    validate_csrf();
+    $prod_id = filter_var($_POST['produto_id'] ?? null, FILTER_VALIDATE_INT);
+    $tipo = $_POST['tipo'] ?? '';
+    if (!$prod_id || !in_array($tipo, ['venda', 'aluguel'], true)) {
+        http_response_code(422);
+        exit('Produto ou tipo de operação inválido.');
+    }
     $prod_data = obterProdutoPorId($prod_id);
     
     if ($prod_data && !isset($prod_data['error'])) {
@@ -39,8 +45,9 @@ if (isset($_POST['add_item'])) {
 }
 
 // Ação: Remover Item
-if (isset($_GET['remover'])) {
-    $temp_id = $_GET['remover'];
+if (isset($_POST['remover'])) {
+    validate_csrf();
+    $temp_id = (string)$_POST['remover'];
     foreach ($_SESSION['venda_atual'] as $key => $item) {
         if ($item['temp_id'] == $temp_id) {
             unset($_SESSION['venda_atual'][$key]);
@@ -163,9 +170,12 @@ foreach ($_SESSION['venda_atual'] as $item) {
                                             </td>
                                             <td class="text-end">R$ <?= number_format($item['preco'], 2, ',', '.') ?></td>
                                             <td class="text-center">
-                                                <a href="venda.php?cliente_id=<?= $cliente_id ?>&remover=<?= $item['temp_id'] ?>" class="btn btn-sm btn-outline-danger">
-                                                    <i class="bi bi-trash"></i>
-                                                </td>
+                                                <form method="POST">
+                                                    <?= csrf_input() ?>
+                                                    <input type="hidden" name="remover" value="<?= htmlspecialchars($item['temp_id'], ENT_QUOTES, 'UTF-8') ?>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                                </form>
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -174,6 +184,7 @@ foreach ($_SESSION['venda_atual'] as $item) {
                     </div>
                     <div class="card-footer p-4">
                         <form action="finalizar_venda.php" method="POST">
+                            <?= csrf_input() ?>
                             <input type="hidden" name="cliente_id" value="<?= $cliente_id ?>">
                             <div class="mb-4">
                                 <label class="form-label fw-bold"><i class="bi bi-chat-left-text me-2"></i>Observações:</label>
@@ -271,6 +282,7 @@ foreach ($_SESSION['venda_atual'] as $item) {
                                         </div>
                                         <div class="mt-3 d-flex gap-2">
                                             <form method="POST" class="flex-grow-1 text-center">
+                                                <?= csrf_input() ?>
                                                 <div class="small fw-bold mb-1 text-success">R$ <?= number_format($pVenda, 2, ',', '.') ?></div>
                                                 <input type="hidden" name="produto_id" value="<?= $pid ?>">
                                                 <input type="hidden" name="tipo" value="venda">
@@ -279,6 +291,7 @@ foreach ($_SESSION['venda_atual'] as $item) {
                                                 </button>
                                             </form>
                                             <form method="POST" class="flex-grow-1 text-center">
+                                                <?= csrf_input() ?>
                                                 <div class="small fw-bold mb-1 text-warning-emphasis">R$ <?= number_format($pAluguel, 2, ',', '.') ?></div>
                                                 <input type="hidden" name="produto_id" value="<?= $pid ?>">
                                                 <input type="hidden" name="tipo" value="aluguel">

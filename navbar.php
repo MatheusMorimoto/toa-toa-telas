@@ -49,5 +49,27 @@
                 <input type="text" name="busca" class="form-control" placeholder="Busca rápida...">
             </form>
         </div>
+        <?php if (env_bool('APP_AUTH_ENABLED', false)): ?>
+            <form action="logout.php" method="POST" class="ms-2">
+                <?= csrf_input() ?>
+                <button type="submit" class="btn btn-outline-light btn-sm" title="Sair">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </form>
+        <?php endif; ?>
     </div>
 </header>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('form[method="POST"]').forEach((form) => {
+        form.addEventListener('submit', () => {
+            form.setAttribute('aria-busy', 'true');
+            setTimeout(() => {
+                form.querySelectorAll('button[type="submit"]').forEach((button) => {
+                    button.disabled = true;
+                });
+            }, 0);
+        });
+    });
+});
+</script>

@@ -26,6 +26,18 @@ if (!empty($busca)) {
     <?php include_once 'navbar.php'; ?>
 
     <div class="container-fluid main-content">
+        <?php if (isset($_GET['excluido'])): ?>
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                Cliente removido com sucesso.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
+        <?php if (isset($_GET['venda_sucesso'])): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                Operação registrada com sucesso.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="text-dark">
                 <i class="bi bi-people-fill me-2" style="color: #001D3D;"></i> 

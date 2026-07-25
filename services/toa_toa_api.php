@@ -16,6 +16,12 @@ function toa_api_key()
     return trim((string)env_value('CHAVE_MESTRA', ''));
 }
 
+function toa_api_ca_bundle()
+{
+    $path = dirname(__DIR__) . '/certificates/cacert.pem';
+    return is_file($path) && is_readable($path) ? $path : null;
+}
+
 function toa_api_error_message($status)
 {
     $messages = [
@@ -86,6 +92,7 @@ function toa_api_request($method, $endpoint, $data = null, $multipart = false, $
 
     $url = toa_api_base_url() . '/' . ltrim($endpoint, '/');
     $headers = ['Accept: application/json'];
+    $caBundle = toa_api_ca_bundle();
     if ($authenticated) {
         $headers[] = 'x-api-key: ' . $apiKey;
     }
@@ -107,6 +114,7 @@ function toa_api_request($method, $endpoint, $data = null, $multipart = false, $
             'ssl' => [
                 'verify_peer' => true,
                 'verify_peer_name' => true,
+                'cafile' => $caBundle ?: (string)ini_get('openssl.cafile'),
             ],
         ]);
         $response = @file_get_contents($url, false, $context);
@@ -126,6 +134,9 @@ function toa_api_request($method, $endpoint, $data = null, $multipart = false, $
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
         ]);
+        if ($caBundle !== null) {
+            curl_setopt($ch, CURLOPT_CAINFO, $caBundle);
+        }
 
         if ($data !== null) {
             if ($multipart) {

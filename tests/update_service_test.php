@@ -126,6 +126,8 @@ try {
     update_check($service->isProtectedPath('imagens/cliente.jpg'), 'preserva imagens do usuário');
     update_check($service->isProtectedPath('dados.sqlite'), 'preserva banco de dados local');
     update_check($service->isProtectedPath('settings.json'), 'preserva preferências locais');
+    update_check(!$service->isProtectedPath('certificates/cacert.pem'), 'permite atualizar certificado público');
+    update_check($service->isProtectedPath('certificates/chave-privada.pem'), 'protege outros arquivos PEM');
 
     $rollbackApp = $tempRoot . '/rollback-app';
     $rollbackBackup = $tempRoot . '/rollback-backup';

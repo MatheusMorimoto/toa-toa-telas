@@ -264,6 +264,9 @@ final class UpdateService
     public function isProtectedPath(string $relativePath): bool
     {
         $normalized = trim(str_replace('\\', '/', $relativePath), '/');
+        if (strtolower($normalized) === 'certificates/cacert.pem') {
+            return false;
+        }
         $segments = explode('/', strtolower($normalized));
         if ($normalized === '' || in_array($segments[0], array_map('strtolower', self::BLOCKED_TOP_LEVEL), true)) {
             return true;
@@ -306,6 +309,7 @@ final class UpdateService
                     return strlen($header);
                 },
             ]);
+            $this->configureCertificateBundle($ch);
             $contents = curl_exec($ch);
             $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $error = curl_error($ch);
@@ -358,6 +362,7 @@ final class UpdateService
                     return strlen($header);
                 },
             ]);
+            $this->configureCertificateBundle($ch);
             $ok = curl_exec($ch);
             $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $error = curl_error($ch);
@@ -375,6 +380,14 @@ final class UpdateService
             return;
         }
         throw new UpdateException('O GitHub excedeu o limite seguro de redirecionamentos.');
+    }
+
+    private function configureCertificateBundle($curlHandle): void
+    {
+        $certificateBundle = $this->appRoot . '/certificates/cacert.pem';
+        if (is_file($certificateBundle) && is_readable($certificateBundle)) {
+            curl_setopt($curlHandle, CURLOPT_CAINFO, $certificateBundle);
+        }
     }
 
     private function resolveRedirect(string $currentUrl, string $location): string

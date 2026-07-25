@@ -60,7 +60,15 @@ function is_authenticated()
 
 function require_auth()
 {
-    if (PHP_SAPI === 'cli' || is_authenticated()) {
+    if (PHP_SAPI === 'cli') {
+        return;
+    }
+
+    // Abra a sessão enquanto ainda estamos no início da requisição. Mesmo com a
+    // autenticação desativada, a navbar usa a sessão para o token CSRF.
+    start_secure_session();
+
+    if (is_authenticated()) {
         return;
     }
     $requestUri = $_SERVER['REQUEST_URI'] ?? 'index.php';

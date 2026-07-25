@@ -31,6 +31,38 @@ function toa_api_error_message($status)
     return $messages[$status] ?? 'Não foi possível concluir a operação.';
 }
 
+function toa_api_connection_error_message($curlError)
+{
+    $error = trim((string)$curlError);
+    $normalized = strtolower($error);
+
+    if ($error === '') {
+        return 'Não foi possível estabelecer contato com a API. Verifique se allow_url_fopen ou a extensão cURL está habilitada no PHP.';
+    }
+    if (str_contains($normalized, 'timed out') || str_contains($normalized, 'timeout')) {
+        return 'A API demorou mais que o esperado. Verifique a conexão com a internet e o firewall.';
+    }
+    if (
+        str_contains($normalized, 'certificate') ||
+        str_contains($normalized, 'ssl') ||
+        str_contains($normalized, 'unable to get local issuer')
+    ) {
+        return 'Falha ao validar o certificado HTTPS da API. Configure curl.cainfo e openssl.cafile no php.ini do PHP Desktop. Detalhe: ' . $error;
+    }
+    if (
+        str_contains($normalized, 'resolve host') ||
+        str_contains($normalized, 'could not resolve') ||
+        str_contains($normalized, 'getaddrinfo')
+    ) {
+        return 'O PHP Desktop não conseguiu resolver o endereço da API. Verifique DNS, internet e firewall. Detalhe: ' . $error;
+    }
+    if (str_contains($normalized, 'connect')) {
+        return 'O PHP Desktop não conseguiu abrir conexão com a API. Verifique internet, proxy e firewall. Detalhe: ' . $error;
+    }
+
+    return 'Não foi possível estabelecer contato com a API. Detalhe: ' . $error;
+}
+
 function toa_api_request($method, $endpoint, $data = null, $multipart = false, $authenticated = true)
 {
     $apiKey = toa_api_key();
@@ -112,12 +144,10 @@ function toa_api_request($method, $endpoint, $data = null, $multipart = false, $
     }
 
     if ($response === false) {
-        error_log('Falha de rede ao acessar a API TOA-TOA.');
+        error_log('Falha de rede ao acessar a API TOA-TOA' . ($curlError !== '' ? ': ' . $curlError : '.'));
         return [
             'error' => 'Erro de conexão',
-            'detalhes' => str_contains(strtolower($curlError), 'timed out')
-                ? 'A API demorou mais que o esperado. A operação não foi repetida automaticamente.'
-                : 'Não foi possível estabelecer contato com a API.',
+            'detalhes' => toa_api_connection_error_message($curlError),
             'status' => 0,
         ];
     }

@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Documentação Técnica — Tôa Tôa Moda Festa</title>
+<style>
+@page { size: A4; margin: 16mm 14mm 17mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #15243a; font: 10.2pt/1.45 "Segoe UI", Arial, sans-serif; }
+h1, h2, h3 { color: #001d3d; page-break-after: avoid; }
+h1 { font-size: 25pt; margin: 0 0 8mm; }
+h2 { font-size: 17pt; border-bottom: 2px solid #ffd700; padding-bottom: 2mm; margin: 9mm 0 4mm; }
+h3 { font-size: 12.5pt; margin: 6mm 0 2mm; }
+p { margin: 0 0 3mm; }
+ul, ol { margin: 2mm 0 4mm 6mm; padding-left: 5mm; }
+li { margin: 1mm 0; }
+code { color: #8a2d00; background: #f4f5f7; padding: .2mm 1mm; border-radius: 1mm; }
+pre { white-space: pre-wrap; background: #f3f5f8; border-left: 3px solid #ffd700; padding: 3mm; font: 8.5pt/1.4 Consolas, monospace; }
+table { width: 100%; border-collapse: collapse; margin: 3mm 0 5mm; font-size: 8.8pt; }
+th { background: #001d3d; color: #fff; text-align: left; }
+th, td { border: 1px solid #cbd3dc; padding: 2mm; vertical-align: top; }
+tr:nth-child(even) td { background: #f7f8fa; }
+.cover { height: 260mm; display: flex; flex-direction: column; justify-content: center; text-align: center; page-break-after: always; border: 3px solid #001d3d; padding: 20mm; }
+.cover .brand { color: #ffd700; background: #001d3d; padding: 12mm 6mm; font-weight: 800; font-size: 26pt; }
+.cover .subtitle { font-size: 17pt; margin-top: 12mm; color: #001d3d; }
+.cover .meta { margin-top: 25mm; color: #536273; }
+.page-break { page-break-before: always; }
+.note { border: 1px solid #e1ba00; background: #fff9d9; padding: 3mm; margin: 3mm 0; }
+.diagram { border: 1px solid #aeb9c5; background: #fbfcfe; border-radius: 2mm; padding: 4mm; margin: 4mm 0 7mm; page-break-inside: avoid; }
+.diagram-title { text-align: center; font-weight: 700; color: #001d3d; margin-bottom: 3mm; }
+.row { display: flex; align-items: stretch; justify-content: center; gap: 2mm; }
+.col { display: flex; flex-direction: column; gap: 2mm; justify-content: center; }
+.box { min-width: 27mm; padding: 3mm 2mm; border: 1.3px solid #001d3d; border-radius: 2mm; background: #fff; text-align: center; font-size: 8.2pt; }
+.box.gold { background: #fff4a8; border-color: #b99700; }
+.box.blue { background: #001d3d; color: #fff; }
+.box.green { background: #dff5e5; border-color: #2d8a4e; }
+.box.red { background: #ffe4e6; border-color: #c9303e; }
+.box.data { border-radius: 50%; background: #e9f2ff; }
+.arrow { display: flex; align-items: center; justify-content: center; min-width: 9mm; color: #001d3d; font-size: 15pt; font-weight: 700; }
+.down { text-align: center; color: #001d3d; font-size: 15pt; line-height: 1; }
+.label { text-align: center; color: #536273; font-size: 7.5pt; margin: 0 0 1mm; }
+.sequence { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.5mm; }
+.sequence .head { background: #001d3d; color: white; padding: 2mm 1mm; text-align: center; font-weight: 700; }
+.sequence .event { grid-column: 1/-1; display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; min-height: 9mm; border-bottom: 1px dashed #cbd3dc; font-size: 7.7pt; }
+.sequence .event span { padding: 1mm; text-align: center; }
+.sequence .event .message { grid-column: var(--from)/var(--to); border-bottom: 1px solid #2d8a4e; color: #1f6b3a; }
+.erd { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm 12mm; position: relative; }
+.entity { border: 1px solid #001d3d; background: white; }
+.entity strong { display: block; color: white; background: #001d3d; padding: 2mm; text-align: center; }
+.entity div { padding: 1.5mm 2mm; border-top: 1px solid #d6dce3; font-size: 7.8pt; }
+.small { font-size: 8.5pt; color: #536273; }
+.footer-note { margin-top: 10mm; padding-top: 3mm; border-top: 1px solid #cbd3dc; font-size: 8pt; color: #667586; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="brand">TÔA TÔA MODA FESTA</div>
+  <div class="subtitle">Documentação Técnica e Funcional</div>
+  <p>Sistema de gestão de produtos, clientes, vendas, aluguéis e catálogos</p>
+  <div class="meta">
+    <p><strong>Versão 1.1.2</strong></p>
+    <p>PHP Desktop Chrome 130.1 · PHP 8.3</p>
+    <p>Repositório: github.com/MatheusMorimoto/toa-toa-telas</p>
+    <p>Documento gerado em 24/07/2026</p>
+  </div>
+</section>
+
+<h1>1. Visão geral</h1>
+<p>A aplicação é uma interface PHP executável como programa desktop ou site. Ela centraliza o cadastro de vestidos, clientes, vendas e aluguéis, além de gerar catálogos compartilháveis. Os dados operacionais são obtidos de uma API remota Node.js/Express no Render, cuja persistência está no PostgreSQL/Supabase.</p>
+<div class="note"><strong>Fonte de verdade:</strong> a API remota e seu banco. Os SQL MySQL deste repositório são dumps locais legados e não representam integralmente o contrato atual.</div>
+
+<h2>1.1 Capacidades</h2>
+<ul>
+  <li>CRUD de produtos e clientes por API.</li>
+  <li>Upload validado de imagens JPEG, PNG e WebP, até 10 MB.</li>
+  <li>Carrinho em sessão para operações de venda e aluguel.</li>
+  <li>Revalidação de estoque e preços no fechamento.</li>
+  <li>Catálogo público com seleção de produtos, cache e WhatsApp.</li>
+  <li>Login administrativo opcional, sessão segura e proteção CSRF.</li>
+  <li>Atualização automática via GitHub, SHA-256, backup e rollback.</li>
+</ul>
+
+<h2>1.2 Tecnologias e requisitos</h2>
+<table>
+<tr><th>Área</th><th>Tecnologia</th><th>Observação</th></tr>
+<tr><td>Interface</td><td>PHP, HTML, CSS, Bootstrap</td><td>Bootstrap e ícones são carregados por CDN.</td></tr>
+<tr><td>Desktop</td><td>PHP Desktop Chrome</td><td>A pasta externa pode ser renomeada; a aplicação permanece em <code>www</code>.</td></tr>
+<tr><td>HTTP</td><td>cURL/OpenSSL</td><td>Usa <code>certificates/cacert.pem</code>.</td></tr>
+<tr><td>API/dados</td><td>Node.js, Render, Supabase</td><td>A chave fica somente no servidor PHP.</td></tr>
+<tr><td>Atualização</td><td>GitHub + ZIP + SHA-256</td><td>Requer cURL, OpenSSL, Zip e escrita em <code>storage</code>.</td></tr>
+</table>
+
+<div class="page-break"></div>
+<h1>2. Diagramas de arquitetura</h1>
+
+<div class="diagram">
+<div class="diagram-title">Diagrama 1 — Contexto do sistema</div>
+<div class="row">
+  <div class="col"><div class="box gold">Operador<br>da loja</div><div class="box gold">Cliente<br>final</div></div>
+  <div class="arrow">→</div>
+  <div class="col"><div class="box blue">Aplicação PHP<br>PHP Desktop / Web</div><div class="box green">Catálogo público</div></div>
+  <div class="arrow">→</div>
+  <div class="col"><div class="box">API Tôa Tôa<br>Node.js / Render</div><div class="box">GitHub<br>atualizações</div><div class="box">ViaCEP / WhatsApp</div></div>
+  <div class="arrow">→</div>
+  <div class="box data">PostgreSQL<br>Supabase</div>
+</div>
+</div>
+
+<p>O operador usa as telas administrativas. O cliente final acessa apenas o catálogo público. A aplicação PHP atua como servidor intermediário, preservando a chave da API.</p>
+
+<div class="diagram">
+<div class="diagram-title">Diagrama 2 — Componentes internos</div>
+<div class="row">
+  <div class="col">
+    <div class="box gold">Produtos</div>
+    <div class="box gold">Clientes</div>
+    <div class="box gold">Venda/Aluguel</div>
+    <div class="box gold">Catálogo</div>
+    <div class="box gold">Atualizador</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="col">
+    <div class="box blue">security.php<br>sessão / CSRF / .env</div>
+    <div class="box blue">db.php<br>fachada</div>
+    <div class="box blue">navbar.php<br>UI compartilhada</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="col">
+    <div class="box green">toa_toa_api.php</div>
+    <div class="box green">catalog_service.php</div>
+    <div class="box green">update_service.php</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="col">
+    <div class="box data">API remota</div>
+    <div class="box data">storage/catalog</div>
+    <div class="box data">storage/update</div>
+    <div class="box data">GitHub</div>
+  </div>
+</div>
+</div>
+
+<h2>2.1 Estrutura principal</h2>
+<table>
+<tr><th>Grupo</th><th>Arquivos</th><th>Função</th></tr>
+<tr><td>Produtos</td><td><code>index.php</code>, <code>produtos.php</code>, <code>salvar_produto.php</code>, <code>editar_produto.php</code></td><td>Cadastro, pesquisa, edição, exclusão e seleção para catálogo.</td></tr>
+<tr><td>Clientes</td><td><code>cadastro_cliente.php</code>, <code>clientes_cadastrados.php</code></td><td>CRM e início da operação.</td></tr>
+<tr><td>Operações</td><td><code>venda.php</code>, <code>finalizar_venda.php</code></td><td>Carrinho e fechamento.</td></tr>
+<tr><td>Catálogo</td><td><code>catalogo.php</code>, <code>catalog_service.php</code></td><td>Link público, cache e WhatsApp.</td></tr>
+<tr><td>Atualização</td><td><code>atualizador.php</code>, <code>update_api.php</code>, <code>update_service.php</code></td><td>Verificação e instalação segura.</td></tr>
+</table>
+
+<div class="page-break"></div>
+<h1>3. Diagramas de fluxo</h1>
+
+<div class="diagram">
+<div class="diagram-title">Diagrama 3 — Cadastro de produto</div>
+<div class="row">
+  <div class="box gold">Preencher<br>produto</div><div class="arrow">→</div>
+  <div class="box">Validar campos,<br>CSRF e imagem</div><div class="arrow">→</div>
+  <div class="box">Montar<br>multipart</div><div class="arrow">→</div>
+  <div class="box blue">POST API<br>+ x-api-key</div><div class="arrow">→</div>
+  <div class="box data">Supabase</div>
+</div>
+<div class="down">↓</div>
+<div class="row"><div class="box green">Sucesso: redireciona para cadastro</div><div class="box red">Falha: exibe status e detalhe seguro</div></div>
+</div>
+
+<p>O MIME é determinado por Fileinfo, não apenas pela extensão. O transporte multipart exige cURL. Imagens inválidas, acima de 10 MB ou fora dos formatos aceitos são rejeitadas.</p>
+
+<div class="diagram">
+<div class="diagram-title">Diagrama 4 — Sequência de venda/aluguel</div>
+<div class="sequence">
+  <div class="head">Operador</div><div class="head">venda.php</div><div class="head">Sessão</div><div class="head">Finalizador</div><div class="head">API</div>
+  <div class="event"><span>Seleciona cliente</span><span class="message" style="--from:2;--to:4">inicia venda</span></div>
+  <div class="event"><span>Adiciona item/tipo</span><span class="message" style="--from:2;--to:5">consulta produto</span></div>
+  <div class="event"><span></span><span></span><span>guarda carrinho</span><span></span><span></span></div>
+  <div class="event"><span>Confirma pagamento</span><span></span><span class="message" style="--from:3;--to:5">envia carrinho</span></div>
+  <div class="event"><span></span><span></span><span></span><span class="message" style="--from:4;--to:6">revalida preço/estoque</span></div>
+  <div class="event"><span></span><span></span><span></span><span class="message" style="--from:4;--to:6">POST /toa-toa-vendas</span></div>
+  <div class="event"><span>Recebe confirmação</span><span></span><span>carrinho limpo</span><span></span><span>venda_id</span></div>
+</div>
+</div>
+
+<p>O fechamento aceita dinheiro, Pix, crédito e débito. Venda exige estoque; aluguel usa o preço de pacote. O desconto não pode superar subtotal mais costura.</p>
+
+<div class="diagram">
+<div class="diagram-title">Diagrama 5 — Catálogo público e contingência</div>
+<div class="row">
+  <div class="box gold">Selecionar<br>produtos</div><div class="arrow">→</div>
+  <div class="box">Validar URL<br>HTTPS pública</div><div class="arrow">→</div>
+  <div class="box green">Compartilhar<br>catalogo.php?ids=...</div><div class="arrow">→</div>
+  <div class="box">Consultar API</div>
+</div>
+<div class="down">↓</div>
+<div class="row">
+  <div class="box green">API disponível<br>atualiza cache</div>
+  <div class="box red">API indisponível<br>usa último cache</div>
+  <div class="arrow">→</div>
+  <div class="box gold">Interesse via<br>WhatsApp</div>
+</div>
+</div>
+
+<p>Os IDs são validados, limitados a 100 itens e filtrados no servidor. A chave da API não aparece no link nem no navegador.</p>
+
+<div class="page-break"></div>
+<h1>4. Atualização e implantação</h1>
+
+<div class="diagram">
+<div class="diagram-title">Diagrama 6 — Atualização segura</div>
+<div class="row">
+  <div class="box gold">Verificar<br>version.json</div><div class="arrow">→</div>
+  <div class="box">Comparar<br>versões</div><div class="arrow">→</div>
+  <div class="box blue">Baixar ZIP<br>HTTPS</div><div class="arrow">→</div>
+  <div class="box">Validar host,<br>SHA-256 e paths</div>
+</div>
+<div class="down">↓</div>
+<div class="row">
+  <div class="box">Staging</div><div class="arrow">→</div>
+  <div class="box">Backup</div><div class="arrow">→</div>
+  <div class="box green">Instalação em www</div><div class="arrow">→</div>
+  <div class="box red">Falha?<br>Rollback</div>
+</div>
+</div>
+
+<p>O caminho-base é a pasta da aplicação, calculada a partir do serviço. Renomear a pasta externa do PHP Desktop não muda esse comportamento. Credenciais, dados locais, imagens e configurações protegidas não são substituídos.</p>
+
+<h2>4.1 Publicação</h2>
+<pre>powershell -ExecutionPolicy Bypass -File tools/build-update-package.ps1 -Version 1.1.3
+git add -A
+git add -f releases/toa-toa-1.1.3.zip
+git commit -m "Publica versão 1.1.3"
+git push origin main</pre>
+<p>Um envio comum ao GitHub não basta. O número precisa aumentar e o ZIP imutável deve corresponder ao SHA-256 do manifesto.</p>
+
+<h2>4.2 PHP Desktop</h2>
+<pre>phpdesktop-qualquer-nome/
+├── php/
+├── settings.json
+└── www/
+    ├── .env
+    ├── certificates/cacert.pem
+    ├── services/
+    ├── storage/
+    └── index.php</pre>
+<p>Extensões necessárias: cURL, Fileinfo, OpenSSL e Zip. A pasta externa pode ser renomeada; preserve <code>www</code> ou ajuste <code>settings.json</code>.</p>
+
+<div class="page-break"></div>
+<h1>5. Modelo de dados</h1>
+
+<div class="diagram">
+<div class="diagram-title">Diagrama 7 — Entidades dos dumps MySQL locais</div>
+<div class="erd">
+  <div class="entity"><strong>CLIENTES</strong><div>PK id</div><div>UK cpf</div><div>nome, telefone</div><div>endereço</div></div>
+  <div class="entity"><strong>VENDAS</strong><div>PK id</div><div>imagem</div><div>total</div></div>
+  <div class="entity"><strong>PRODUTOS</strong><div>PK id</div><div>código, nome, categoria</div><div>estoque e preços</div><div>imagem</div></div>
+  <div class="entity"><strong>ITENS_VENDA</strong><div>PK id</div><div>FK venda_id</div><div>FK produto_id</div><div>quantidade e preço</div></div>
+</div>
+<p class="label">VENDAS 1:N ITENS_VENDA · PRODUTOS 1:N ITENS_VENDA · sem FK local CLIENTES→VENDAS</p>
+</div>
+
+<h2>5.1 Contrato conceitual remoto</h2>
+<table>
+<tr><th>Recurso</th><th>Campos principais</th></tr>
+<tr><td>Produto</td><td>código, nome, categoria, validade, quantidade, preço de venda, preço de aluguel, imagem e descrição</td></tr>
+<tr><td>Cliente</td><td>nome, CPF, RG, contatos, e-mail, CEP, endereço, preferências e data do evento</td></tr>
+<tr><td>Operação</td><td>cliente, pagamento, costura, desconto, observações e itens com tipo e preço</td></tr>
+</table>
+
+<h2>5.2 Endpoints usados</h2>
+<table>
+<tr><th>Método</th><th>Rota</th><th>Finalidade</th></tr>
+<tr><td>GET</td><td>/health</td><td>Saúde, sem chave</td></tr>
+<tr><td>GET/POST</td><td>/toa-toa-api-supabase</td><td>Listar/pesquisar e criar produtos</td></tr>
+<tr><td>GET/PUT/DELETE</td><td>/toa-toa-api-supabase/{id}</td><td>Consultar, editar e excluir produto</td></tr>
+<tr><td>GET/POST</td><td>/toa-toa-clientes</td><td>Listar/pesquisar e criar clientes</td></tr>
+<tr><td>GET/PUT/DELETE</td><td>/toa-toa-clientes/{id}</td><td>Consultar, editar e excluir cliente</td></tr>
+<tr><td>POST</td><td>/toa-toa-vendas</td><td>Registrar venda/aluguel</td></tr>
+</table>
+
+<div class="page-break"></div>
+<h1>6. Segurança e configuração</h1>
+<h2>6.1 Controles</h2>
+<ul>
+  <li>Chave da API mantida em <code>.env</code> e enviada apenas server-side.</li>
+  <li>Cookies HttpOnly, SameSite=Lax e Secure sob HTTPS.</li>
+  <li>Tokens CSRF para operações mutáveis.</li>
+  <li>Escape HTML, validação de upload e redirecionamento local seguro.</li>
+  <li>Hosts GitHub permitidos, SHA-256, staging, backup e rollback.</li>
+  <li>Certificado CA empacotado sem desabilitar validação TLS.</li>
+</ul>
+
+<h2>6.2 Variáveis essenciais</h2>
+<pre>APP_AUTH_ENABLED=false
+APP_AUTH_USER=admin
+APP_AUTH_PASSWORD_HASH=
+API_BASE_URL=https://api-toa-a-toa-2.onrender.com
+TOA_TOA_API_KEY=
+UPDATER_MANIFEST_URL=https://raw.githubusercontent.com/MatheusMorimoto/toa-toa-telas/main/version.json
+UPDATER_CHECK_INTERVAL=300
+PUBLIC_APP_URL=https://catalogo.seudominio.com
+WHATSAPP_BUSINESS_NUMBER=5565999999999</pre>
+
+<h2>6.3 Testes</h2>
+<pre>php tests/run.php
+php tests/catalog_test.php
+php tests/update_service_test.php</pre>
+<p>O último comando exige a extensão Zip para executar o cenário integral.</p>
+
+<h2>6.4 Diagnóstico rápido</h2>
+<table>
+<tr><th>Sintoma</th><th>Ação</th></tr>
+<tr><td>Certificado HTTPS inválido</td><td>Copiar <code>certificates/cacert.pem</code> e os serviços; reiniciar o PHP Desktop.</td></tr>
+<tr><td>API sem dados</td><td>Conferir URL/chave, cURL, OpenSSL, DNS e firewall.</td></tr>
+<tr><td>Atualizador offline</td><td>Conferir certificado, Zip, escrita em <code>storage</code> e <code>updater.log</code>.</td></tr>
+<tr><td>Catálogo sem link</td><td>Configurar <code>PUBLIC_APP_URL</code> HTTPS, não localhost.</td></tr>
+<tr><td>Sessão após headers</td><td>Incluir segurança antes do HTML e salvar PHP sem BOM.</td></tr>
+</table>
+
+<h2>6.5 Limitações</h2>
+<ul>
+  <li>Backend e migrações oficiais ficam fora deste repositório.</li>
+  <li>Sem fila offline para alterações administrativas.</li>
+  <li>Carrinho temporário depende da sessão.</li>
+  <li>Catálogo limitado a 100 IDs.</li>
+  <li>Bootstrap e ícones dependem de CDN.</li>
+  <li>Mudanças no executável/PHP exigem redistribuição do PHP Desktop.</li>
+</ul>
+
+<p class="footer-note">Documento complementar ao README.md. Em caso de divergência, o código-fonte e o manifesto da versão instalada prevalecem.</p>
+</body>
+</html>

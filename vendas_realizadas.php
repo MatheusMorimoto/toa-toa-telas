@@ -1,55 +1,34 @@
 <?php
 include_once 'db.php';
-
-$mes = (string)($_GET['mes'] ?? date('Y-m'));
-if (!preg_match('/^\d{4}-\d{2}$/', $mes)) $mes = date('Y-m');
-$vendas = array_values(array_filter(listarVendasLocais(), static function ($venda) use ($mes) {
-    return str_starts_with((string)($venda['realizada_em'] ?? ''), $mes);
+$inicio = (string)($_GET['inicio'] ?? date('Y-m-01'));
+$fim = (string)($_GET['fim'] ?? date('Y-m-t'));
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $inicio)) $inicio = date('Y-m-01');
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fim)) $fim = date('Y-m-t');
+if ($fim < $inicio) [$inicio, $fim] = [$fim, $inicio];
+$vendas = array_values(array_filter(listarVendasLocais(), static function ($venda) use ($inicio, $fim) {
+    $data = substr((string)($venda['realizada_em'] ?? ''), 0, 10);
+    return $data >= $inicio && $data <= $fim;
 }));
 usort($vendas, static fn($a, $b) => strcmp((string)($b['realizada_em'] ?? ''), (string)($a['realizada_em'] ?? '')));
-$totalMes = array_sum(array_map(static fn($v) => (float)($v['valor_final'] ?? 0), $vendas));
+$totalPeriodo = array_sum(array_map(static fn($v) => (float)($v['valor_final'] ?? 0), $vendas));
 $rotulosPagamento = ['dinheiro' => 'Dinheiro', 'pix' => 'PIX', 'cartao_credito' => 'Cartão de crédito', 'cartao_debito' => 'Cartão de débito'];
 ?>
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tôa Tôa - Vendas Realizadas</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <link href="index.css" rel="stylesheet">
-</head>
-<body>
+<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Tôa Tôa - Vendas Realizadas</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"><link href="index.css" rel="stylesheet"></head><body>
 <?php include_once 'navbar.php'; ?>
 <main class="container-fluid main-content mt-4 px-4">
-    <?php if (isset($_GET['venda_sucesso'])): ?><div class="alert alert-success">Venda ou aluguel registrado com sucesso.</div><?php endif; ?>
-    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
-        <div><h2 class="mb-1">Vendas realizadas</h2><p class="text-muted mb-0">Histórico completo do mês selecionado.</p></div>
-        <form method="GET"><label class="form-label fw-bold">Mês</label><input type="month" name="mes" value="<?= htmlspecialchars($mes) ?>" class="form-control" onchange="this.form.submit()"></form>
-    </div>
-    <div class="row g-3 mb-4">
-        <div class="col-md-4"><div class="card shadow-sm"><div class="card-body"><div class="text-muted">Operações no mês</div><div class="display-6 fw-bold"><?= count($vendas) ?></div></div></div></div>
-        <div class="col-md-4"><div class="card shadow-sm border-success"><div class="card-body"><div class="text-muted">Total líquido</div><div class="display-6 fw-bold text-success">R$ <?= number_format($totalMes, 2, ',', '.') ?></div></div></div></div>
-    </div>
-    <div class="card shadow-sm"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
-        <thead class="table-dark"><tr><th>Data</th><th>Cliente</th><th>Itens</th><th>Retirada / devolução</th><th>Pagamento</th><th>Desconto</th><th class="text-end">Valor final</th></tr></thead>
-        <tbody>
-        <?php if (empty($vendas)): ?><tr><td colspan="7" class="text-center text-muted py-5">Nenhuma venda registrada neste mês.</td></tr><?php endif; ?>
-        <?php foreach ($vendas as $venda): ?>
-            <tr>
-                <td><?= htmlspecialchars(date('d/m/Y H:i', strtotime((string)$venda['realizada_em']))) ?></td>
-                <td><strong><?= htmlspecialchars($venda['cliente_nome'] ?? 'Cliente') ?></strong><br><small><?= htmlspecialchars($venda['cliente_cpf'] ?? '') ?></small></td>
-                <td><?php foreach (($venda['itens'] ?? []) as $item): ?><div><span class="badge <?= ($item['tipo'] ?? '') === 'aluguel' ? 'bg-warning text-dark' : 'bg-success' ?>"><?= htmlspecialchars(strtoupper((string)($item['tipo'] ?? ''))) ?></span> <?= htmlspecialchars($item['produto_nome'] ?? ('Produto #' . ($item['produto_id'] ?? ''))) ?> — R$ <?= number_format((float)($item['preco'] ?? 0), 2, ',', '.') ?></div><?php endforeach; ?></td>
-                <td><?= !empty($venda['data_retirada']) ? htmlspecialchars(date('d/m/Y', strtotime($venda['data_retirada']))) . '<br>' . htmlspecialchars(date('d/m/Y', strtotime($venda['data_devolucao']))) : '—' ?></td>
-                <td><?= htmlspecialchars($rotulosPagamento[$venda['forma_pagamento'] ?? ''] ?? ($venda['forma_pagamento'] ?? '')) ?><?php if (!empty($venda['bandeira_cartao'])): ?><br><small><?= htmlspecialchars(strtoupper($venda['bandeira_cartao'])) ?></small><?php endif; ?></td>
-                <td>R$ <?= number_format((float)($venda['desconto_valor'] ?? 0), 2, ',', '.') ?></td>
-                <td class="text-end fw-bold text-success">R$ <?= number_format((float)($venda['valor_final'] ?? 0), 2, ',', '.') ?></td>
-            </tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table></div></div>
-</main>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php if (isset($_GET['venda_sucesso'])): ?><div class="alert alert-success">Venda ou aluguel registrado com sucesso.</div><?php endif; ?>
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3"><div><h2 class="mb-1">Vendas realizadas</h2><p class="text-muted mb-0">Filtre por período e escolha quais registros deseja salvar em PDF.</p></div>
+<form method="GET" class="row g-2 align-items-end"><div class="col-auto"><label class="form-label fw-bold">Data inicial</label><input type="date" name="inicio" value="<?= htmlspecialchars($inicio) ?>" class="form-control" required></div><div class="col-auto"><label class="form-label fw-bold">Data final</label><input type="date" name="fim" value="<?= htmlspecialchars($fim) ?>" class="form-control" required></div><div class="col-auto"><button class="btn btn-warning"><i class="bi bi-funnel me-1"></i>Filtrar</button></div></form></div>
+<div class="row g-3 mb-4"><div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted">Operações no período</div><div class="display-6 fw-bold"><?= count($vendas) ?></div></div></div></div><div class="col-md-4"><div class="card shadow-sm border-success"><div class="card-body"><div class="text-muted">Total líquido</div><div class="display-6 fw-bold text-success">R$ <?= number_format($totalPeriodo, 2, ',', '.') ?></div></div></div></div></div>
+<form id="pdf-form" action="vendas_relatorio.php" method="GET" target="_blank" class="card shadow-sm mb-3"><input type="hidden" name="inicio" value="<?= htmlspecialchars($inicio) ?>"><input type="hidden" name="fim" value="<?= htmlspecialchars($fim) ?>"><div class="card-body"><div class="d-flex flex-wrap align-items-center gap-3"><strong>Incluir no PDF:</strong>
+<label class="form-check"><input class="form-check-input pagamento-pdf" type="checkbox" name="pagamentos[]" value="pix" checked> <span class="form-check-label">PIX</span></label><label class="form-check"><input class="form-check-input pagamento-pdf" type="checkbox" name="pagamentos[]" value="dinheiro" checked> <span class="form-check-label">Dinheiro</span></label><label class="form-check"><input class="form-check-input pagamento-pdf cartao-individual" type="checkbox" name="pagamentos[]" value="cartao_debito" checked> <span class="form-check-label">Cartão de débito</span></label><label class="form-check"><input class="form-check-input pagamento-pdf cartao-individual" type="checkbox" name="pagamentos[]" value="cartao_credito" checked> <span class="form-check-label">Cartão de crédito</span></label>
+<label class="form-check border rounded px-4 py-2 bg-light"><input class="form-check-input" type="checkbox" name="cartoes_juntos" value="1" id="cartoes_juntos"> <span class="form-check-label fw-bold">Agrupar crédito + débito</span></label><button type="submit" class="btn btn-danger ms-auto" <?= empty($vendas) ? 'disabled' : '' ?>><i class="bi bi-file-earmark-pdf me-1"></i>Salvar relatório em PDF</button></div><div class="form-text">Marque as linhas desejadas abaixo. Se nenhuma for marcada, serão incluídas todas as vendas das formas de pagamento selecionadas.</div></div></form>
+<div class="card shadow-sm"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-dark"><tr><th><input class="form-check-input" type="checkbox" id="selecionar_todas" title="Selecionar todas"></th><th>Data</th><th>Cliente</th><th>Itens</th><th>Retirada / devolução</th><th>Pagamento</th><th>Desconto</th><th class="text-end">Valor final</th></tr></thead><tbody>
+<?php if (empty($vendas)): ?><tr><td colspan="8" class="text-center text-muted py-5">Nenhuma venda registrada no período selecionado.</td></tr><?php endif; ?>
+<?php foreach ($vendas as $venda): ?><tr><td><input class="form-check-input venda-pdf" form="pdf-form" type="checkbox" name="vendas[]" value="<?= htmlspecialchars((string)($venda['registro_local_id'] ?? '')) ?>"></td><td><?= htmlspecialchars(date('d/m/Y H:i', strtotime((string)$venda['realizada_em']))) ?></td><td><strong><?= htmlspecialchars($venda['cliente_nome'] ?? 'Cliente') ?></strong><br><small><?= htmlspecialchars($venda['cliente_cpf'] ?? '') ?></small></td><td><?php foreach (($venda['itens'] ?? []) as $item): ?><div><span class="badge <?= ($item['tipo'] ?? '') === 'aluguel' ? 'bg-warning text-dark' : 'bg-success' ?>"><?= htmlspecialchars(strtoupper((string)($item['tipo'] ?? ''))) ?></span> <?= htmlspecialchars($item['produto_nome'] ?? ('Produto #' . ($item['produto_id'] ?? ''))) ?> - R$ <?= number_format((float)($item['preco'] ?? 0), 2, ',', '.') ?></div><?php endforeach; ?></td><td><?= !empty($venda['data_retirada']) ? htmlspecialchars(date('d/m/Y', strtotime($venda['data_retirada']))) . '<br>' . htmlspecialchars(date('d/m/Y', strtotime($venda['data_devolucao']))) : '-' ?></td><td><?= htmlspecialchars($rotulosPagamento[$venda['forma_pagamento'] ?? ''] ?? ($venda['forma_pagamento'] ?? '')) ?><?php if (!empty($venda['bandeira_cartao'])): ?><br><small><?= htmlspecialchars(strtoupper($venda['bandeira_cartao'])) ?></small><?php endif; ?></td><td>R$ <?= number_format((float)($venda['desconto_valor'] ?? 0), 2, ',', '.') ?></td><td class="text-end fw-bold text-success">R$ <?= number_format((float)($venda['valor_final'] ?? 0), 2, ',', '.') ?></td></tr><?php endforeach; ?>
+</tbody></table></div></div></main><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script><script>
+document.getElementById('selecionar_todas')?.addEventListener('change', e => document.querySelectorAll('.venda-pdf').forEach(item => item.checked = e.target.checked));
+document.getElementById('cartoes_juntos')?.addEventListener('change', e => { if (e.target.checked) document.querySelectorAll('.cartao-individual').forEach(item => item.checked = true); });
+document.getElementById('pdf-form')?.addEventListener('submit', e => { if (!document.querySelector('.pagamento-pdf:checked')) { e.preventDefault(); alert('Selecione pelo menos uma forma de pagamento para o PDF.'); } });
+</script></body></html>

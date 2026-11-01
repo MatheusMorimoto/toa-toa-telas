@@ -112,6 +112,22 @@ try {
     $dadosVenda['venda_id'] = $vendaId ?: null;
     $dadosVenda['cliente_nome'] = (string)($cliente['nome_completo'] ?? ('Cliente #' . $clienteId));
     $dadosVenda['cliente_cpf'] = (string)($cliente['cpf'] ?? '');
+    $dadosVenda['cliente_detalhes'] = [
+        'nome_completo' => (string)($cliente['nome_completo'] ?? ''),
+        'cpf' => (string)($cliente['cpf'] ?? ''),
+        'rg' => (string)($cliente['rg'] ?? ''),
+        'whatsapp' => (string)($cliente['whatsapp'] ?? ''),
+        'telefone_secundario' => (string)($cliente['telefone_secundario'] ?? ''),
+        'email' => (string)($cliente['email'] ?? ''),
+        'data_evento' => (string)($cliente['data_evento'] ?? ''),
+        'cep' => (string)($cliente['cep'] ?? ''),
+        'rua' => (string)($cliente['rua'] ?? ''),
+        'numero' => (string)($cliente['numero'] ?? ''),
+        'bairro' => (string)($cliente['bairro'] ?? ''),
+        'cidade' => (string)($cliente['cidade'] ?? ''),
+        'complemento' => (string)($cliente['complemento'] ?? ''),
+        'preferencias' => (string)($cliente['preferencias'] ?? ''),
+    ];
     $dadosVenda['subtotal'] = $subtotal;
     $dadosVenda['valor_final'] = max(0, $subtotal + (float)$valorCostura - (float)$desconto);
     registrarVendaLocal($dadosVenda);

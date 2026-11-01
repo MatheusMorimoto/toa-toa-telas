@@ -1,7 +1,7 @@
 {
-  "version": "1.1.4",
-  "download_url": "https://github.com/MatheusMorimoto/toa-toa-telas/raw/refs/heads/main/releases/toa-toa-1.1.4.zip",
-  "sha256": "38a9c23cc8c7ca139711579d21509a7db84bf16e412046169c4bf4042c5befe2",
+  "version": "1.1.5",
+  "download_url": "https://github.com/MatheusMorimoto/toa-toa-telas/raw/refs/heads/main/releases/toa-toa-1.1.5.zip",
+  "sha256": "a4dc1d33b3fd8330bd38404efcfccc6ebd9e82ca254cf8ef67e4389d35a4c208",
   "minimum_app_version": "1.0.0",
-  "published_at": "2026-11-01T19:42:56.9682598+00:00"
+  "published_at": "2026-11-01T19:47:00.3855028+00:00"
 }

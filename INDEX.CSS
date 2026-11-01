@@ -17,8 +17,9 @@ body {
     color: var(--yellow-brand);
     padding: 12px 30px;
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
+    gap: 24px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
@@ -26,6 +27,7 @@ body {
     display: flex;
     align-items: center;
     gap: 15px;
+    min-width: 0;
 }
 
 .top-bar .brand-area img {
@@ -40,6 +42,7 @@ body {
     border-left: 1px solid var(--yellow-brand);
     padding-left: 15px;
     color: var(--yellow-brand);
+    min-width: 0;
 }
 
 .brand-main { font-weight: 800; font-size: 2.2rem; text-transform: uppercase; }
@@ -67,6 +70,7 @@ body {
     align-items: center;
     justify-content: flex-end;
     gap: 10px;
+    min-width: 0;
 }
 
 .top-bar h1 {
@@ -92,9 +96,41 @@ body {
     padding: 8px 20px;
 }
 
+/* Em telas intermediárias, o título central cede espaço aos dois blocos
+   funcionais. Isso impede que textos e botões ocupem a mesma coluna. */
+@media (max-width: 1500px) and (min-width: 1101px) {
+    .top-bar {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px;
+    }
+
+    .title-area {
+        display: none;
+    }
+
+    .top-bar .brand-area img {
+        height: 100px;
+        width: auto;
+        flex: 0 0 auto;
+    }
+
+    .brand-main {
+        font-size: 1.65rem;
+    }
+
+    .brand-sub {
+        font-size: 1.05rem;
+    }
+
+    .brand-desc {
+        font-size: .95rem;
+        letter-spacing: .5px;
+    }
+}
+
 @media (max-width: 1100px) {
     .top-bar {
-        grid-template-columns: auto 1fr auto;
+        grid-template-columns: auto minmax(0, 1fr);
         padding: 10px 16px;
         gap: 12px;
     }
@@ -104,18 +140,36 @@ body {
         width: auto;
     }
 
-    .top-bar .brand-text,
-    .search-container {
+    .top-bar .brand-text {
         display: none;
+    }
+
+    .title-area {
+        justify-content: flex-start;
     }
 
     .top-bar h1 {
         font-size: 1.25rem;
     }
 
-    .header-right-content,
+    .header-right-content {
+        grid-column: 1 / -1;
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
     .nav-links-top {
+        justify-content: center;
+        flex-wrap: wrap;
         gap: 4px;
+    }
+
+    .search-container {
+        width: min(100%, 280px);
+        min-width: 220px;
+        margin-left: 0 !important;
     }
 
     .nav-links-top .btn {
@@ -124,6 +178,55 @@ body {
 
     .main-content {
         padding: 18px 16px;
+    }
+}
+
+@media (max-width: 700px) {
+    .top-bar {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        padding: 10px 12px;
+    }
+
+    .top-bar .brand-area img {
+        height: 72px;
+    }
+
+    .title-area {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .top-bar h1 {
+        font-size: 1.05rem;
+        white-space: normal;
+    }
+
+    .header-right-content {
+        grid-column: 1;
+        flex-direction: column;
+    }
+
+    .nav-links-top,
+    .search-container {
+        width: 100%;
+        max-width: 360px;
+    }
+
+    .nav-links-top .dropdown {
+        flex: 1 1 auto;
+    }
+
+    .nav-links-top .btn {
+        width: 100%;
+    }
+
+    .header-right-content > form.ms-2 {
+        margin-left: 0 !important;
+    }
+
+    .main-content {
+        padding: 14px 10px;
     }
 }
 

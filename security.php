@@ -44,6 +44,20 @@ function start_secure_session()
     if (session_status() === PHP_SESSION_ACTIVE) {
         return;
     }
+
+    // O PHP Desktop pode apontar o diretório temporário para C:\Windows\Temp,
+    // que não é gravável para todos os usuários. Mantenha as sessões dentro do
+    // próprio aplicativo para evitar falhas na limpeza e no início da sessão.
+    $sessionDirectory = __DIR__ . '/storage/sessions';
+    if (!is_dir($sessionDirectory) && !mkdir($sessionDirectory, 0775, true) && !is_dir($sessionDirectory)) {
+        throw new RuntimeException('Não foi possível preparar o diretório de sessões do aplicativo.');
+    }
+    session_save_path($sessionDirectory);
+    ini_set('session.use_strict_mode', '1');
+
+    if (headers_sent()) {
+        throw new RuntimeException('A sessão não pode ser iniciada depois do envio do conteúdo da página.');
+    }
     $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
     session_set_cookie_params(['httponly' => true, 'secure' => $isHttps, 'samesite' => 'Lax']);
     session_start();

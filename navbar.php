@@ -21,6 +21,15 @@
         box-shadow: 0 .4rem 1.4rem rgba(0, 0, 0, .3);
         font: 500 .9rem/1.35 system-ui, sans-serif;
     }
+    .header-search-actions {
+        display: flex;
+        min-width: 250px;
+        flex-direction: column;
+        gap: .4rem;
+    }
+    #check-update-button {
+        width: 100%;
+    }
 </style>
 <header class="top-bar">
     <div class="brand-area">
@@ -70,10 +79,14 @@
                 </ul>
             </div>
         </div>
-        <div class="search-container ms-3"> 
+        <div class="search-container header-search-actions ms-3">
             <form action="produtos.php" method="GET">
                 <input type="text" name="busca" class="form-control" placeholder="Busca rápida...">
             </form>
+            <button type="button" id="check-update-button" class="btn btn-outline-warning btn-sm">
+                <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>
+                <span>Buscar atualização</span>
+            </button>
         </div>
         <?php if (env_bool('APP_AUTH_ENABLED', false)): ?>
             <form action="logout.php" method="POST" class="ms-2">
@@ -100,6 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const updateStatus = document.getElementById('update-status');
+    const checkUpdateButton = document.getElementById('check-update-button');
+    const checkUpdateButtonLabel = checkUpdateButton?.querySelector('span');
     const csrfToken = <?= json_encode(csrf_token(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     let checkingUpdate = false;
 
@@ -136,9 +151,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const setUpdateButtonBusy = (busy) => {
+        if (!checkUpdateButton) return;
+        checkUpdateButton.disabled = busy;
+        checkUpdateButton.setAttribute('aria-busy', busy ? 'true' : 'false');
+        if (checkUpdateButtonLabel) {
+            checkUpdateButtonLabel.textContent = busy ? 'Verificando…' : 'Buscar atualização';
+        }
+    };
+
     const checkForUpdates = async () => {
         if (checkingUpdate || document.visibilityState === 'hidden') return;
         checkingUpdate = true;
+        setUpdateButtonBusy(true);
         showUpdateStatus('Verificando atualizações…');
         try {
             const response = await fetch('update_api.php?action=check', {
@@ -162,9 +187,11 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         } finally {
             checkingUpdate = false;
+            setUpdateButtonBusy(false);
         }
     };
 
+    checkUpdateButton?.addEventListener('click', checkForUpdates);
     checkForUpdates();
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') checkForUpdates();

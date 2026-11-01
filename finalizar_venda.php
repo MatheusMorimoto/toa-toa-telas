@@ -19,6 +19,9 @@ if (!$clienteId || (string)$clienteId !== (string)$clienteSessao || empty($_SESS
 
 $formasPagamento = ['dinheiro', 'pix', 'cartao_credito', 'cartao_debito'];
 $formaPagamento = $_POST['forma_pagamento'] ?? '';
+$bandeiraCartao = trim((string)($_POST['bandeira_cartao'] ?? ''));
+$dataRetirada = trim((string)($_POST['data_retirada'] ?? ''));
+$dataDevolucao = trim((string)($_POST['data_devolucao'] ?? ''));
 $valorCostura = filter_var($_POST['valor_costura'] ?? 0, FILTER_VALIDATE_FLOAT);
 $desconto = filter_var($_POST['desconto_valor'] ?? 0, FILTER_VALIDATE_FLOAT);
 
@@ -28,11 +31,20 @@ if (!in_array($formaPagamento, $formasPagamento, true) ||
     http_response_code(422);
     exit('Dados financeiros invalidos.');
 }
+$formasCartao = ['cartao_credito', 'cartao_debito'];
+$bandeiras = ['visa', 'mastercard', 'elo', 'american_express', 'hipercard', 'outra'];
+if (in_array($formaPagamento, $formasCartao, true) && !in_array($bandeiraCartao, $bandeiras, true)) {
+    http_response_code(422);
+    exit('Selecione a bandeira do cartão.');
+}
 
 try {
     $dadosVenda = [
         'cliente_id' => $clienteId,
         'forma_pagamento' => $formaPagamento,
+        'bandeira_cartao' => $bandeiraCartao !== '' ? $bandeiraCartao : null,
+        'data_retirada' => $dataRetirada !== '' ? $dataRetirada : null,
+        'data_devolucao' => $dataDevolucao !== '' ? $dataDevolucao : null,
         'valor_costura' => (float)$valorCostura,
         'desconto_valor' => (float)$desconto,
         'observacoes' => trim((string)($_POST['observacoes'] ?? '')),
@@ -68,9 +80,22 @@ try {
         $subtotal += $preco;
         $dadosVenda['itens'][] = [
             'produto_id' => $produtoId,
+            'produto_nome' => (string)($produto['nomeProduto'] ?? $produto['nome'] ?? ('Produto #' . $produtoId)),
             'tipo' => $tipo,
             'preco' => $preco,
         ];
+    }
+
+    $possuiAluguel = count(array_filter($dadosVenda['itens'], static fn($item) => $item['tipo'] === 'aluguel')) > 0;
+    if ($possuiAluguel) {
+        $retirada = DateTimeImmutable::createFromFormat('!Y-m-d', $dataRetirada);
+        $devolucao = DateTimeImmutable::createFromFormat('!Y-m-d', $dataDevolucao);
+        if (!$retirada || !$devolucao || $devolucao < $retirada) {
+            throw new RuntimeException('Informe datas válidas de retirada e devolução.');
+        }
+    } else {
+        $dadosVenda['data_retirada'] = null;
+        $dadosVenda['data_devolucao'] = null;
     }
 
     if ($desconto > $subtotal + $valorCostura) {
@@ -83,8 +108,15 @@ try {
     }
 
     $vendaId = filter_var($res['venda_id'] ?? $res['id'] ?? null, FILTER_VALIDATE_INT);
+    $cliente = buscarCliente($clienteId);
+    $dadosVenda['venda_id'] = $vendaId ?: null;
+    $dadosVenda['cliente_nome'] = (string)($cliente['nome_completo'] ?? ('Cliente #' . $clienteId));
+    $dadosVenda['cliente_cpf'] = (string)($cliente['cpf'] ?? '');
+    $dadosVenda['subtotal'] = $subtotal;
+    $dadosVenda['valor_final'] = max(0, $subtotal + (float)$valorCostura - (float)$desconto);
+    registrarVendaLocal($dadosVenda);
     unset($_SESSION['venda_atual'], $_SESSION['venda_cliente_id']);
-    $redirect = 'clientes_cadastrados.php?venda_sucesso=1';
+    $redirect = 'vendas_realizadas.php?venda_sucesso=1';
     if ($vendaId) {
         $redirect .= '&venda_id=' . rawurlencode((string)$vendaId);
     }

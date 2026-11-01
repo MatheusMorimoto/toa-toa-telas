@@ -92,6 +92,41 @@ body {
     padding: 8px 20px;
 }
 
+@media (max-width: 1100px) {
+    .top-bar {
+        grid-template-columns: auto 1fr auto;
+        padding: 10px 16px;
+        gap: 12px;
+    }
+
+    .top-bar .brand-area img {
+        height: 88px;
+        width: auto;
+    }
+
+    .top-bar .brand-text,
+    .search-container {
+        display: none;
+    }
+
+    .top-bar h1 {
+        font-size: 1.25rem;
+    }
+
+    .header-right-content,
+    .nav-links-top {
+        gap: 4px;
+    }
+
+    .nav-links-top .btn {
+        margin-right: 0 !important;
+    }
+
+    .main-content {
+        padding: 18px 16px;
+    }
+}
+
 /* 2. Seção de Entrada de Dados (Formulário) */
 .main-content {
     padding: 20px 40px;

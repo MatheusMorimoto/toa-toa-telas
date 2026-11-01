@@ -18,28 +18,10 @@ $user = env_value('DB_USER', '');
 $pass = env_value('DB_PASSWORD', '');
 $dbname = env_value('DB_NAME', '');
 
-// Inicialização da conexão MySQLi (Necessária para cadastro_cliente.php e finalizar_venda.php)
-// O padrão para XAMPP/WAMP é host: localhost, user: root, senha: "", banco: produtos_cadastrados
-if (function_exists('mysqli_report')) {
-    @mysqli_report(MYSQLI_REPORT_OFF);
-}
-
+// A aplicação usa a API remota nas funções abaixo. Manter uma tentativa de
+// conexão MySQL local durante toda abertura atrasava a primeira tela quando
+// nenhum servidor MySQL estava ativo, embora essa conexão não fosse utilizada.
 $conn = null;
-if (class_exists('mysqli')) {
-    try {
-        $conn = @new mysqli(
-            env_value('MYSQL_HOST', 'localhost'),
-            env_value('MYSQL_USER', 'root'),
-            env_value('MYSQL_PASSWORD', ''),
-            env_value('MYSQL_DATABASE', 'produtos_cadastrados')
-        );
-        if ($conn->connect_error) {
-            $conn = null;
-        }
-    } catch (Exception $e) {
-        $conn = null;
-    }
-}
 
 function listarProdutos() {
     return toa_api_request("GET", "/toa-toa-api-supabase");
@@ -93,6 +75,52 @@ function excluirCliente($id) {
 // FUNÇÃO PARA REGISTRO DE VENDAS E ALUGUÉIS
 function registrarOperacaoCompleta($dados) {
     return toa_api_request("POST", "/toa-toa-vendas", $dados);
+}
+
+function vendasHistoricoArquivo() {
+    return __DIR__ . '/storage/vendas_realizadas.json';
+}
+
+function listarVendasLocais() {
+    $arquivo = vendasHistoricoArquivo();
+    if (!is_file($arquivo)) {
+        return [];
+    }
+    $dados = json_decode((string)@file_get_contents($arquivo), true);
+    return is_array($dados) ? $dados : [];
+}
+
+function registrarVendaLocal($dados) {
+    $arquivo = vendasHistoricoArquivo();
+    $diretorio = dirname($arquivo);
+    if (!is_dir($diretorio) && !mkdir($diretorio, 0775, true) && !is_dir($diretorio)) {
+        throw new RuntimeException('Não foi possível criar o histórico local de vendas.');
+    }
+
+    $handle = fopen($arquivo, 'c+');
+    if ($handle === false || !flock($handle, LOCK_EX)) {
+        throw new RuntimeException('Não foi possível abrir o histórico local de vendas.');
+    }
+    try {
+        $conteudo = stream_get_contents($handle);
+        $vendas = $conteudo !== false && trim($conteudo) !== '' ? json_decode($conteudo, true) : [];
+        if (!is_array($vendas)) {
+            $vendas = [];
+        }
+        $dados['registro_local_id'] = $dados['registro_local_id'] ?? bin2hex(random_bytes(8));
+        $dados['realizada_em'] = $dados['realizada_em'] ?? date(DATE_ATOM);
+        $vendas[] = $dados;
+        rewind($handle);
+        ftruncate($handle, 0);
+        if (fwrite($handle, json_encode($vendas, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) === false) {
+            throw new RuntimeException('Não foi possível salvar o histórico local de vendas.');
+        }
+        fflush($handle);
+        return $dados;
+    } finally {
+        flock($handle, LOCK_UN);
+        fclose($handle);
+    }
 }
 
 function verificarSaudeApi() {

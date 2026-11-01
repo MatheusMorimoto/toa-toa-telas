@@ -59,6 +59,16 @@
                     <li><a class="dropdown-item" href="produtos.php">Produtos Cadastrados</a></li>
                 </ul>
             </div>
+
+            <div class="dropdown d-inline-block">
+                <button class="btn btn-outline-warning btn-sm dropdown-toggle" type="button" id="dropdownVendas" data-bs-toggle="dropdown" aria-expanded="false">
+                    Vendas
+                </button>
+                <ul class="dropdown-menu shadow" aria-labelledby="dropdownVendas">
+                    <li><a class="dropdown-item" href="iniciar_venda.php">Iniciar venda ou aluguel</a></li>
+                    <li><a class="dropdown-item" href="vendas_realizadas.php">Vendas realizadas</a></li>
+                </ul>
+            </div>
         </div>
         <div class="search-container ms-3"> 
             <form action="produtos.php" method="GET">

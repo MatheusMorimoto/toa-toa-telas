@@ -76,6 +76,7 @@ foreach ($_SESSION['venda_atual'] as $item) {
         $subtotal_aluguel += $item['preco'];
     }
 }
+$possui_aluguel = $subtotal_aluguel > 0;
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -194,7 +195,7 @@ foreach ($_SESSION['venda_atual'] as $item) {
                                 <div class="col-md-6 border-end">
                                     <div class="mb-3">
                                         <label class="form-label fw-bold"><i class="bi bi-cash-stack me-2"></i>Forma de Pagamento:</label>
-                                        <select name="forma_pagamento" class="form-select shadow-sm" required>
+                                        <select name="forma_pagamento" id="forma_pagamento" class="form-select shadow-sm" required>
                                             <option value="">Selecione...</option>
                                             <option value="dinheiro">Dinheiro</option>
                                             <option value="pix">PIX</option>
@@ -202,6 +203,30 @@ foreach ($_SESSION['venda_atual'] as $item) {
                                             <option value="cartao_debito">Cartão de Debito</option>
                                         </select>
                                     </div>
+                                    <div class="mb-3 d-none" id="grupo_bandeira">
+                                        <label class="form-label fw-bold">Bandeira do cartão:</label>
+                                        <select name="bandeira_cartao" id="bandeira_cartao" class="form-select shadow-sm">
+                                            <option value="">Selecione...</option>
+                                            <option value="visa">Visa</option>
+                                            <option value="mastercard">Mastercard</option>
+                                            <option value="elo">Elo</option>
+                                            <option value="american_express">American Express</option>
+                                            <option value="hipercard">Hipercard</option>
+                                            <option value="outra">Outra</option>
+                                        </select>
+                                    </div>
+                                    <?php if ($possui_aluguel): ?>
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6">
+                                                <label class="form-label fw-bold">Data da retirada:</label>
+                                                <input type="date" name="data_retirada" id="data_retirada" class="form-control" min="<?= date('Y-m-d') ?>" required>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label fw-bold">Data da devolução:</label>
+                                                <input type="date" name="data_devolucao" id="data_devolucao" class="form-control" min="<?= date('Y-m-d') ?>" required>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
                                     <div class="mb-3">
                                         <label class="form-label fw-bold"><i class="bi bi-scissors me-2"></i>Valor da Costura (R$):</label>
                                         <input type="number" step="0.01" name="valor_costura" id="valor_costura" class="form-control" value="0.00">
@@ -317,6 +342,30 @@ foreach ($_SESSION['venda_atual'] as $item) {
         const inputDescPorc = document.getElementById('desconto_porcentagem');
         const inputCostura = document.getElementById('valor_costura');
         const displayTotal = document.getElementById('display_total_geral');
+        const formaPagamento = document.getElementById('forma_pagamento');
+        const grupoBandeira = document.getElementById('grupo_bandeira');
+        const bandeiraCartao = document.getElementById('bandeira_cartao');
+        const dataRetirada = document.getElementById('data_retirada');
+        const dataDevolucao = document.getElementById('data_devolucao');
+
+        const alternarBandeira = () => {
+            const usaCartao = ['cartao_credito', 'cartao_debito'].includes(formaPagamento.value);
+            grupoBandeira.classList.toggle('d-none', !usaCartao);
+            bandeiraCartao.required = usaCartao;
+            if (!usaCartao) bandeiraCartao.value = '';
+        };
+        formaPagamento.addEventListener('change', alternarBandeira);
+        alternarBandeira();
+
+        if (dataRetirada && dataDevolucao) {
+            const hoje = new Date().toISOString().slice(0, 10);
+            dataRetirada.value = dataRetirada.value || hoje;
+            dataDevolucao.min = dataRetirada.value;
+            dataRetirada.addEventListener('change', () => {
+                dataDevolucao.min = dataRetirada.value;
+                if (dataDevolucao.value && dataDevolucao.value < dataRetirada.value) dataDevolucao.value = dataRetirada.value;
+            });
+        }
 
         function atualizarTotal() {
             const descValor = parseFloat(inputDescValor.value) || 0;
